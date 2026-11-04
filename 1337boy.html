@@ -669,7 +669,7 @@
 <script id="b1337-rom-b64" type="text/plain"></script>
 <script id="b1337-core">
 /* ============================================================================
- * 1337Boy(TM) GBA Emulator Core v1.1
+ * 1337Boy(TM) GBA Emulator Core v1.1.1
  * Copyright (c) 2026 Khamerron Kizer / ConsciousNode SoftWorks
  * License: MIT
  * House Philosophy: Xinu (Single File, Zero Dependencies, Offline-First)
@@ -866,6 +866,9 @@ class GBA {
     this.ws32N = new Uint8Array(16);
     this.ws32S = new Uint8Array(16);
     this.prefetchEnabled = false;
+    this.lastPrefetchedPc = 0;
+    this.dataRegion = 0;
+    this.curPc = 0;
     this.prefetchCount = 0;
     this.prefetchDuty  = 0;
     this.memCycles = 0;
@@ -1677,7 +1680,7 @@ class GBA {
   read8(addr) {
     addr >>>= 0;
     const region = addr >>> 24;
-    if (region < 16) this.memCycles += this.ws16N[region];
+    if (region < 16) this.dataRegion = region, this.memCycles += this.ws16N[region];
     switch (region) {
       case 0x00: {
         if (addr >= 0x4000) return (this.readOpenBus32(addr) >>> ((addr & 3) << 3)) & 0xFF;
@@ -1715,7 +1718,7 @@ class GBA {
   read16(addr) {
     addr >>>= 0;
     const region = addr >>> 24;
-    if (region < 16) this.memCycles += this.ws16N[region];
+    if (region < 16) this.dataRegion = region, this.memCycles += this.ws16N[region];
     if (region === 0x0E || region === 0x0F) {
       const b = this.readSave8(addr);
       return b | (b << 8);
@@ -1769,7 +1772,7 @@ class GBA {
   read32Aligned(addr) {
     addr >>>= 0;
     const region = addr >>> 24;
-    if (region < 16) this.memCycles += this.ws32N[region];
+    if (region < 16) this.dataRegion = region, this.memCycles += this.ws32N[region];
     if (region === 0x0E || region === 0x0F) {
       const b = this.readSave8(addr);
       return (b * 0x01010101) >>> 0;
@@ -1835,7 +1838,7 @@ class GBA {
     addr >>>= 0;
     val &= 0xFF;
     const region = addr >>> 24;
-    if (region < 16) this.memCycles += this.ws16N[region];
+    if (region < 16) this.dataRegion = region, this.memCycles += this.ws16N[region];
     switch (region) {
       case 0x02:
         this.ewram[addr & 0x3FFFF] = val;
@@ -1870,7 +1873,7 @@ class GBA {
     addr >>>= 0;
     val &= 0xFFFF;
     const region = addr >>> 24;
-    if (region < 16) this.memCycles += this.ws16N[region];
+    if (region < 16) this.dataRegion = region, this.memCycles += this.ws16N[region];
     if (region === 0x0E || region === 0x0F) {
       const b = (val >>> ((addr & 1) << 3)) & 0xFF;
       this.writeSave8(addr, b);
@@ -1910,7 +1913,7 @@ class GBA {
     addr >>>= 0;
     val >>>= 0;
     const region = addr >>> 24;
-    if (region < 16) this.memCycles += this.ws32N[region];
+    if (region < 16) this.dataRegion = region, this.memCycles += this.ws32N[region];
     if (region === 0x0E || region === 0x0F) {
       const b = (val >>> ((addr & 3) << 3)) & 0xFF;
       this.writeSave8(addr, b);
@@ -2708,6 +2711,7 @@ class GBA {
 
   triggerIrqException() {
     const savedCpsr = this.cpsr;
+    this.lastPrefetchedPc = 0;
     const nextPc = this.r[15] + 4;
     this.switchMode(MODE_IRQ);
     this.spsrIrq = savedCpsr;
@@ -3393,53 +3397,51 @@ class GBA {
     return val;
   }
 
-  // Compute instruction fetch + data + internal cycles with WAITCNT and Game Pak Prefetch Buffer
-  finishCycles(pcRegion, isThumb, baseInternal, branched) {
-    let fetchCost = isThumb ? this.ws16S[pcRegion] : this.ws32S[pcRegion];
+  // Compute instruction fetch + data + internal cycles with WAITCNT and Game Pak Prefetch Buffer.
+  // 1.1.1 (Kehai): cycle model aligned with mGBA 0.10.2, the reference the timing probes are checked
+  // against (tests/timing/). Two rules from it:
+  //  * a data access takes the bus off the cartridge, so the next opcode fetch from ROM is
+  //    non-sequential: charge N-S after any instruction that touched memory (and after multiplies);
+  //  * with the prefetch buffer on, a data access to a non-cartridge region from ROM code lets the
+  //    buffer fetch the next halfwords meanwhile; those sequential fetches are credited back here
+  //    (mGBA's GBAMemoryStall heuristic, including its overlap guard via lastPrefetchedPc).
+  finishCycles(pcRegion, isThumb, baseInternal, branched, nextFetchN) {
     const inRom = (pcRegion >= 8 && pcRegion <= 13);
-
-    if (inRom && this.prefetchEnabled) {
-      if (isThumb) {
-        if (this.prefetchCount > 0) {
-          this.prefetchCount--;
-          fetchCost = 1;
-        }
-      } else {
-        if (this.prefetchCount >= 2) {
-          this.prefetchCount -= 2;
-          fetchCost = 2;
-        } else if (this.prefetchCount === 1) {
-          this.prefetchCount = 0;
-          fetchCost = 1 + this.ws16S[pcRegion];
-        }
-      }
-    }
-
+    const fetchCost = isThumb ? this.ws16S[pcRegion] : this.ws32S[pcRegion];
     const extraInternal = (baseInternal > 1) ? (baseInternal - 1) : 0;
-    const nonFetchCycles = this.memCycles + extraInternal;
+    const hadData = this.memCycles > 0;
+    let body = this.memCycles + extraInternal;
 
-    // While CPU is busy with non-ROM cycles, Game Pak Prefetch Buffer prefetches sequential halfwords
-    if (inRom && this.prefetchEnabled && nonFetchCycles > 0 && !branched) {
-      const sWait = this.ws16S[pcRegion];
-      this.prefetchDuty += nonFetchCycles;
-      while (this.prefetchDuty >= sWait && this.prefetchCount < 8) {
-        this.prefetchDuty -= sWait;
-        this.prefetchCount++;
+    if (inRom && (hadData || nextFetchN)) {
+      if (this.prefetchEnabled && (hadData ? this.dataRegion < 8 : true)) {
+        const s = this.ws16S[pcRegion] - 1;               // sequential wait count
+        const pc = this.curPc >>> 0;
+        let maxLoads = 8, previousLoads = 0;
+        const dist = (this.lastPrefetchedPc - pc) >>> 0;
+        if (dist < 16) { previousLoads = dist >>> 1; maxLoads -= previousLoads; }
+        let stall = s + 1, loads = 1;
+        while (stall < body && loads < maxLoads) { stall += s; loads++; }
+        this.lastPrefetchedPc = (pc + 2 * (loads + previousLoads - 1)) >>> 0;
+        let wait = stall > body ? stall : body;
+        wait -= (this.ws16N[pcRegion] - this.ws16S[pcRegion]) + 1;
+        wait -= stall - 1;
+        body = wait;
       }
+      body += isThumb ? (this.ws16N[pcRegion] - this.ws16S[pcRegion])
+                      : (this.ws32N[pcRegion] - this.ws32S[pcRegion]);
     }
 
     let branchPenalty = 0;
     if (branched) {
+      this.lastPrefetchedPc = 0;   // pipeline flush (mGBA: GBASetActiveRegion)
       const dstReg = (this.r[15] >>> 24) & 0xF;
       const dstThumb = (this.cpsr & FLAG_T) !== 0;
       branchPenalty = dstThumb
         ? (this.ws16N[dstReg] + this.ws16S[dstReg])
         : (this.ws32N[dstReg] + this.ws32S[dstReg]);
-      this.prefetchCount = 0;
-      this.prefetchDuty  = 0;
     }
 
-    return fetchCost + nonFetchCycles + branchPenalty;
+    return fetchCost + body + branchPenalty;
   }
 
   stepInstruction() {
@@ -3464,6 +3466,7 @@ class GBA {
   stepArm() {
     this.memCycles = 0;
     const pc = this.r[15] >>> 0;
+    this.curPc = pc;
     const pcRegion = (pc >>> 24) & 0xF;
 
     // 2-Stage Prefetch Pipeline: if flushed, fill pipe0 (at pc) and pipe1 (at pc+4)
@@ -3564,7 +3567,11 @@ class GBA {
               else if (hi === 0 && lo === 0) c |= FLAG_Z;
               this.cpsr = c;
             }
-            return this.finishCycles(pcRegion, false, accum ? 4 : 3, false);
+            // ARM7TDMI: 1S + (m+1)I (+1I if accumulate); m = Booth steps from the multiplier (Rs).
+            // Signed: leading bytes all-0 or all-1 terminate early; unsigned: only all-0.
+            const ls = isSigned ? ((vs < 0) ? ~vs : vs) : (vs >>> 0);
+            const mL = (ls & 0xFFFFFF00) === 0 ? 1 : ((ls & 0xFFFF0000) === 0 ? 2 : ((ls & 0xFF000000) === 0 ? 3 : 4));
+            return this.finishCycles(pcRegion, false, 2 + mL + (accum ? 1 : 0), false, true);
           } else {
             // MUL / MLA
             const accum    = (instr & (1 << 21)) !== 0;
@@ -3581,7 +3588,7 @@ class GBA {
             // ARM7TDMIbooth multiplier internal cycles (1..4 + 1 if MLA)
             const s = (vs < 0) ? ~vs : vs;
             const mCycles = (s & 0xFFFFFF00) === 0 ? 1 : ((s & 0xFFFF0000) === 0 ? 2 : ((s & 0xFF000000) === 0 ? 3 : 4));
-            return this.finishCycles(pcRegion, false, 1 + mCycles + (accum ? 1 : 0), false);
+            return this.finishCycles(pcRegion, false, 1 + mCycles + (accum ? 1 : 0), false, true);
           }
         } else {
           // Halfword and Signed Data Transfer (STRH, LDRH, LDRSB, LDRSH)
@@ -4017,6 +4024,7 @@ class GBA {
   stepThumb() {
     this.memCycles = 0;
     const pc = this.r[15] >>> 0;
+    this.curPc = pc;
     const pcRegion = (pc >>> 24) & 0xF;
 
     // 2-Stage Prefetch Pipeline: if flushed, fill pipe0 (at pc) and pipe1 (at pc+2)
@@ -4119,11 +4127,11 @@ class GBA {
           case 0xA: res = (a - b) | 0; this.subFlags(a, b, res); break;
           case 0xB: res = (a + b) | 0; this.addFlags(a, b, res); break;
           case 0xC: res = a | b; this.r[rd] = res; this.setNZ(res); break;
-          case 0xD: res = Math.imul(a, b); this.r[rd] = res; this.setNZ(res); intCyc = 3; break;
+          case 0xD: { res = Math.imul(a, b); this.r[rd] = res; this.setNZ(res); const ms = (a < 0) ? ~a : a; intCyc = 1 + ((ms & 0xFFFFFF00) === 0 ? 1 : ((ms & 0xFFFF0000) === 0 ? 2 : ((ms & 0xFF000000) === 0 ? 3 : 4))); break; }
           case 0xE: res = a & ~b; this.r[rd] = res; this.setNZ(res); break;
           case 0xF: res = ~b; this.r[rd] = res; this.setNZ(res); break;
         }
-        return this.finishCycles(pcRegion, true, intCyc, false);
+        return this.finishCycles(pcRegion, true, intCyc, false, op === 0xD);
       }
 
       if (subTop === 1) {
@@ -6775,7 +6783,7 @@ function initB1337App() {
     <header class="b1337-banner">
       <div class="b1337-brand">
         <span class="b1337-logo">1337Boy&trade; COLOR ADVANCE TURBO</span>
-        <span class="b1337-tagline">v1.1 &bull; 999,999 GAMES IN 1! &bull; EVERY CARTRIDGE IS A CONSOLE</span>
+        <span class="b1337-tagline">v1.1.1 &bull; 999,999 GAMES IN 1! &bull; EVERY CARTRIDGE IS A CONSOLE</span>
       </div>
       <div class="b1337-badges">
         <span class="b1337-badge gold" id="ui-cart-badge">NO CART</span>
@@ -7000,7 +7008,7 @@ function initB1337App() {
     <div class="b1337-modal-backdrop hidden" id="modal-about">
       <div class="b1337-modal">
         <div class="b1337-modal-head">
-          <span>ABOUT 1337Boy&trade; v1.1 // PRIOR ART &amp; XINU PHILOSOPHY</span>
+          <span>ABOUT 1337Boy&trade; v1.1.1 // PRIOR ART &amp; XINU PHILOSOPHY</span>
           <button class="b1337-btn" id="btn-close-about">CLOSE</button>
         </div>
         <div class="b1337-modal-body">
@@ -7367,6 +7375,12 @@ function initB1337App() {
   let lastFpsTime = performance.now();
   let framesInSec = 0;
   let autosaveCounter = 0;
+  // 1.1.1 (Kehai, carried over from 1.0.2): pace by elapsed time, not by display refreshes.
+  // The GBA draws a frame every 280896 cycles at 16.78 MHz (about 59.73 Hz); a 90/120/144 Hz
+  // phone screen used to run games that much faster. Accumulate real time x speed and run
+  // however many GBA frames are due (0, 1 or more) on each refresh.
+  const GBA_FRAME_MS = 280896 * 1000 / 16777216;
+  let pacingLast = -1, pacingAcc = 0;
 
   function rafLoop(now) {
     requestAnimationFrame(rafLoop);
@@ -7381,9 +7395,10 @@ function initB1337App() {
       syncCombinedKeys();
     }
 
-    if (!realtimeEnabled || !running || paused || !hasCartridge) return;
+    if (!realtimeEnabled || !running || paused || !hasCartridge) { pacingLast = -1; return; }
 
     if (rewinding) {
+      pacingLast = -1;
       if (rewindRing.length > 0) {
         const snap = rewindRing.pop();
         gba.deserializeState(snap);
@@ -7397,17 +7412,14 @@ function initB1337App() {
     }
 
     const effSpeed = fastForwardTab ? 4.0 : speedMult;
-    let framesToRun = 1;
-    if (effSpeed < 1.0) {
-      slowTickAccum += effSpeed;
-      if (slowTickAccum < 1.0) return;
-      slowTickAccum -= 1.0;
-      framesToRun = 1;
-    } else {
-      framesToRun = effSpeed | 0;
-    }
-
-    for (let i = 0; i < framesToRun; i++) {
+    if (pacingLast < 0) pacingLast = now;
+    let dt = now - pacingLast;
+    pacingLast = now;
+    if (dt > 100) dt = 100;                       // tab was hidden or the page stalled: don't sprint to catch up
+    pacingAcc += dt * effSpeed;
+    const maxFrames = Math.ceil(effSpeed * 6) + 2; // a slow device drops time instead of spiralling
+    let count = 0;
+    while (pacingAcc >= GBA_FRAME_MS && count < maxFrames) {
       gba.runFrame();
       framesInSec++;
       rewindFrameTick++;
@@ -7416,12 +7428,16 @@ function initB1337App() {
         if (rewindRing.length >= REWIND_MAX) rewindRing.shift();
         rewindRing.push(gba.serializeState());
       }
+      pacingAcc -= GBA_FRAME_MS;
+      count++;
     }
+    if (count >= maxFrames) pacingAcc = 0;
+    if (count === 0) return;
     audio.pumpWorkletSamples();
     blitFramebuffer();
     if (debugOpen) updateDebuggerView();
 
-    autosaveCounter++;
+    autosaveCounter += count;
     if (autosaveCounter >= 120) {
       autosaveCounter = 0;
       gba.saveAutosave();

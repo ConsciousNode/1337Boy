@@ -12,6 +12,15 @@ A 1337Boy cartridge is **one file** that is, byte-for-byte, both:
 
 Name it `.1337.gba` and drop it into mGBA or an EverDrive. Name the **exact same bytes** `.1337.html` and open it in Chromium, Firefox, or Safari. Both play the same cartridge.
 
+## v1.1.1 (Kehai Interim, 2026-11-04)
+
+Argon's 1.1 tested independently against mGBA and jsmolka's gba-tests (all 13 pass). Two fixes on top, details and evidence in [TESTING.md](TESTING.md):
+
+- **CPU timing now matches mGBA instruction for instruction.** Six homebrew probe ROMs (`tests/timing/`) time 47 kinds of instruction loop under both `WAITCNT` settings (87 measurements). 1.1 matched mGBA in 38 of them. 1.1 undercharged long multiplies (`SMULL`/`UMULL`, a flat 3 cycles) and Thumb `MUL`. It didn't charge the non-sequential fetch after a load or store from ROM code, and its prefetch buffer used a different model from mGBA's. 1.1.1 matches on every row except one deliberate choice: an `LDM` that reads cartridge data follows GBATEK. That was why *GBA-Craft* rolled a different world seed than in mGBA; now its seed, world and frame rate are identical.
+- **Games run at the GBA's own 59.73 Hz on any screen.** 1.1 still ran one GBA frame per display refresh, so 90/120/144 Hz phones played games 1.5 to 2.4 times too fast. This is the 1.0.2 fix, carried over and combined with 1.1's speed control and fast-forward.
+
+Every cartridge in the repo was rebuilt from the 1.1.1 console. Argon's 1.1 is preserved exactly in the commit before this one.
+
 ## What's New in v1.1
 
 - **Tier 1 Correctness Upgrades**:
