@@ -5736,19 +5736,34 @@ function initB1337App() {
   let framesInSec = 0;
   letautosaveCounter = 0;
 
+  const GBA_FRAME_MS = 280896 * 1000 / 16777216; // 16.743 ms
+  let pacingLast = -1, pacingAcc = 0;
+
   function rafLoop(now) {
     requestAnimationFrame(rafLoop);
     if (gba.linkPeerConnected) {
       linkBadge.textContent = 'LINK: PEER CONNECTED';
       linkBadge.className = 'b1337-badge lime';
     }
-    if (!running || paused || !hasCartridge) return;
+    if (!running || paused || !hasCartridge) { pacingLast = -1; return; }
 
-    const count = fastForward ? 4 : 1;
-    for (let i = 0; i < count; i++) {
+    // 1.0.2 (Kehai Interim): pace by the clock, not by screen refreshes. A real
+    // GBA draws a frame every 280,896 cycles at 16.78 MHz (59.73 Hz). Running one
+    // frame per requestAnimationFrame made games 1.5x too fast on 90 Hz phones
+    // (2x on 120 Hz). Fast-forward is 4x real time.
+    if (pacingLast < 0) pacingLast = now;
+    let dt = now - pacingLast; pacingLast = now;
+    if (dt > 100) dt = 100; // back from a background tab: don't sprint
+    pacingAcc += dt * (fastForward ? 4 : 1);
+    let count = 0;
+    while (pacingAcc >= GBA_FRAME_MS && count < 8) {
       gba.runFrame();
       framesInSec++;
+      pacingAcc -= GBA_FRAME_MS;
+      count++;
     }
+    if (count >= 8) pacingAcc = 0;
+    if (count === 0) return;
     blitFramebuffer();
     if (debugOpen) updateDebuggerView();
 

@@ -72,6 +72,21 @@ Every cartridge was then rebuilt from the fixed console with `tools/1337ify.py`.
 
 ![phones](docs/testing/phones-1.0.1.png)
 
+## Bug fixed in 1.0.2: games ran fast on 90/120 Hz screens
+
+Kham played *Zelda: The Minish Cap* (his own dump, not in this repo) on his phone, and the FPS badge read **89.7**. The loop ran exactly one GBA frame per `requestAnimationFrame`, so a 90 Hz screen ran the game 1.5× too fast, music included (2× at 120 Hz).
+
+**Fix:** a time accumulator runs GBA frames at the hardware rate, 280,896 cycles at 16.78 MHz = **59.73 Hz** (16.743 ms per frame). Fast-forward stays at 4× real time, and returning from a background tab doesn't sprint. Measured with a faked display clock:
+
+| Display | 1.0.1 | 1.0.2 |
+|---|---|---|
+| 60 Hz | 60.0 fps | 59.7 |
+| 90 Hz | 90.0 | 59.8 |
+| 120 Hz | 120.0 | 59.8 |
+| 144 Hz | 144.0 | 59.7 |
+
+The same session confirmed two things already in the 1.1 patch prompt. Minish Cap's music is off (the "simple" sound), and its save-file screen can't save, because it uses an **EEPROM** save chip, which 1.0 doesn't emulate.
+
 ## Notes
 
 - **"Quine":** the 1337 BOOT demo is labelled a quine, but it doesn't print its own source. It *checksums itself*: it computes the CRC32 of its own ROM and displays it. Still a lovely self-referential trick.

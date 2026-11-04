@@ -7,16 +7,16 @@ Every `.1337.gba` file here is **one file that is two things**: a Game Boy Advan
 
 | File | What |
 |---|---|
-| `1337boy.html` (= `index.html`) | The blank console, **1.0.1**: insert any `.gba`, or 1337IFY! it into a polyglot |
+| `1337boy.html` (= `index.html`) | The blank console, **1.0.2**: insert any `.gba`, or 1337IFY! it into a polyglot |
 | `1337boot.1337.gba` / `.html` | The hand-assembled demo cartridge, which checksums itself |
 | `cartridges/wrongfully-accused.1337.gba` / `.html` | The studio's Edo courtroom game, as its own console |
 | `cartridges/gba-craft.1337.gba` / `.html` | The studio's voxel sandbox, as its own console |
 | `tools/1337ify.py` | Command-line builder (Python 3, standard library only) |
 | `tests/` | Independent tests; results in [TESTING.md](TESTING.md) |
 
-**Versions:** 1.0 is Argon's original, as delivered (commit `ea62fcd`). 1.0.1 makes the console fit phone screens; the emulator is unchanged.
+**Versions:** 1.0 is Argon's original, as delivered (commit `ea62fcd`). 1.0.1 makes the console fit phone screens. 1.0.2 paces games by the clock (59.73 Hz) instead of by screen refreshes, so they no longer run fast on 90/120 Hz phones.
 
-**Credits:** concept and direction, Khamerron Kizer · written by Gemini 4 Argon · testing and the 1.0.1 phone fix, Kehai Interim (Claude).
+**Credits:** concept and direction, Khamerron Kizer · written by Gemini 4 Argon · testing and the 1.0.1/1.0.2 fixes, Kehai Interim (Claude).
 
 ---
 
