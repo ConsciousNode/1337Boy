@@ -1,3 +1,27 @@
+# 1337Boy™: the cartridge that is its own console
+
+**[▶ Open the console](https://consciousnode.github.io/1337Boy/)** · [play *Wrongfully Accused*](https://consciousnode.github.io/1337Boy/cartridges/wrongfully-accused.1337.html) · [play *GBA-Craft*](https://consciousnode.github.io/1337Boy/cartridges/gba-craft.1337.html) · [the 1337 BOOT demo](https://consciousnode.github.io/1337Boy/1337boot.1337.html)
+(The links work once GitHub Pages is switched on for this repo.)
+
+Every `.1337.gba` file here is **one file that is two things**: a Game Boy Advance ROM (mGBA, a flash cart) and a web page that carries a GBA emulator written from scratch and plays the cartridge it's part of. The `.1337.html` next to each one is the exact same bytes with a different name.
+
+| File | What |
+|---|---|
+| `1337boy.html` (= `index.html`) | The blank console, **1.0.1**: insert any `.gba`, or 1337IFY! it into a polyglot |
+| `1337boot.1337.gba` / `.html` | The hand-assembled demo cartridge, which checksums itself |
+| `cartridges/wrongfully-accused.1337.gba` / `.html` | The studio's Edo courtroom game, as its own console |
+| `cartridges/gba-craft.1337.gba` / `.html` | The studio's voxel sandbox, as its own console |
+| `tools/1337ify.py` | Command-line builder (Python 3, standard library only) |
+| `tests/` | Independent tests; results in [TESTING.md](TESTING.md) |
+
+**Versions:** 1.0 is Argon's original, as delivered (commit `ea62fcd`). 1.0.1 makes the console fit phone screens; the emulator is unchanged.
+
+**Credits:** concept and direction, Khamerron Kizer · written by Gemini 4 Argon · testing and the 1.0.1 phone fix, Kehai Interim (Claude).
+
+---
+
+*Argon's original README follows.*
+
 # 1337Boy™ COLOR ADVANCE TURBO (999,999 GAMES IN 1!)
 
 > **CONSCIOUSNODE SOFTWORKS // XINU EDITION**
