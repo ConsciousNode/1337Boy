@@ -52,6 +52,17 @@ Open `1337boy.html` directly in your browser:
 - **Play the Built-in Quine Demo**: Click **BOOT 1337 DEMO** to run the hand-assembled `1337 BOOT` cartridge (`1,520` bytes, `CRC32 = 0xADF3A552`), which computes and displays the CRC32 of its own `0x08000000` ROM region in real time.
 - **Forge a Polyglot in the Browser**: Load any `.gba` ROM and click **1337IFY! (EXPORT POLYGLOT)** to download `<title>.1337.gba` and `<title>.1337.html`. Both files are byte-identical polyglots constructed from the page's pristine `<style id="b1337-style">` and `<script id="b1337-core">` source tags.
 
+#### On Android: copy, don't rename
+
+Kham tested 1.1.1 on his phone. The exported `.1337.html` opens and plays, the exported `.1337.gba` loads as a ROM, and renaming the `.html` to `.gba` works too. Going the other way, renaming the `.gba` to `.html`, showed the file as raw text.
+
+The bytes aren't the problem: both exports are identical. Android file managers hand the file to Chrome (a `content://` address) along with the type Android recorded when the file was saved, and renaming often doesn't update that type. Chrome then can't treat the file as a web page by looking at it, because a polyglot has to start with the GBA ROM, not with `<html>`. Desktop browsers go by the file name, so renaming works there.
+
+On Android:
+- open the `.1337.html` export directly, or
+- make a **copy** named `.html` instead of renaming (a new file gets its type from its name), or
+- open the cartridge from the GitHub Pages site, which serves it as HTML.
+
 ### 2. Forging Polyglots from the Command Line (`tools/1337ify.py`)
 Use the zero-dependency Python 3 CLI builder (`tools/1337ify.py`, standard library only) to convert any homebrew `.gba` ROM into a self-hosting 1337Boy cartridge:
 
