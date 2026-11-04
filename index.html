@@ -109,14 +109,14 @@
     border-radius: 8px;
     padding: 8px 10px;
   }
-  .b1337-btn {
+  .b1337-btn, .b1337-select {
     background: linear-gradient(180deg, #283054 0%, #181d35 100%);
     color: var(--text);
     border: 1px solid #3c4678;
     border-radius: 6px;
     padding: 6px 10px;
     font-family: inherit;
-    font-size: 0.76rem;
+    font-size: 0.74rem;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.12s ease;
@@ -124,13 +124,22 @@
     align-items: center;
     gap: 5px;
   }
-  .b1337-btn:hover {
+  .b1337-select {
+    padding: 5px 8px;
+    background-color: #181d35;
+  }
+  .b1337-btn:hover, .b1337-select:hover {
     border-color: var(--cyan);
     color: var(--cyan);
     box-shadow: 0 0 8px rgba(0, 240, 255, 0.25);
   }
   .b1337-btn:active {
     transform: translateY(1px);
+  }
+  .b1337-btn.active-toggle {
+    border-color: var(--lime);
+    color: var(--lime);
+    background: rgba(0, 255, 102, 0.15);
   }
   .b1337-btn.primary {
     background: linear-gradient(180deg, #00c3ff 0%, #0066cc 100%);
@@ -179,6 +188,13 @@
     align-items: center;
     gap: 14px;
     position: relative;
+  }
+  .b1337-console:fullscreen {
+    border-radius: 0;
+    width: 100vw;
+    height: 100vh;
+    justify-content: center;
+    overflow-y: auto;
   }
   /* Screen Bezel */
   .b1337-bezel {
@@ -242,6 +258,22 @@
     align-items: center;
     justify-content: center;
   }
+  .b1337-screen-wrap.int-scale {
+    max-width: 720px;
+  }
+  .b1337-screen-wrap.int-scale #b1337-canvas {
+    width: 480px;
+    height: 320px;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+  @media (min-width: 820px) {
+    .b1337-screen-wrap.int-scale #b1337-canvas {
+      width: 720px;
+      height: 480px;
+    }
+  }
   #b1337-canvas {
     width: 100%;
     height: 100%;
@@ -249,6 +281,18 @@
     image-rendering: crisp-edges;
     display: block;
   }
+  /* Subpixel LCD Grid Overlay */
+  .b1337-lcd-grid {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(to right, rgba(0, 0, 0, 0.28) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0, 0, 0, 0.28) 1px, transparent 1px);
+    background-size: calc(100% / 240) calc(100% / 160);
+    z-index: 2;
+  }
+  .b1337-lcd-grid.hidden { display: none; }
   /* Blank Console Drop Zone Overlay */
   .b1337-dropzone {
     position: absolute;
@@ -265,6 +309,7 @@
     margin: 8px;
     border-radius: 8px;
     transition: background 0.15s ease;
+    z-index: 5;
   }
   .b1337-dropzone.dragover {
     background: rgba(0, 240, 255, 0.18);
@@ -292,6 +337,14 @@
     justify-content: center;
     margin-top: 6px;
   }
+  .b1337-recent-bar {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 4px;
+    max-width: 100%;
+  }
   /* Touch Controls Overlay / Gamepad Deck */
   .b1337-deck {
     width: 100%;
@@ -304,8 +357,9 @@
   .b1337-shoulders {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     width: 100%;
-    gap: 16px;
+    gap: 10px;
   }
   .b1337-pad-btn {
     background: linear-gradient(180deg, #2d355e 0%, #1a203b 100%);
@@ -462,7 +516,7 @@
     background: rgba(0, 240, 255, 0.12);
     display: block;
   }
-  /* Modals (Pause/Header Info, Self-Test Report, About/Prior Art) */
+  /* Modals */
   .b1337-modal-backdrop {
     position: fixed;
     inset: 0;
@@ -532,6 +586,39 @@
   }
   .b1337-test-row.pass { color: var(--lime); }
   .b1337-test-row.fail { color: var(--red); font-weight: 700; }
+  /* Save State Slots Grid */
+  .b1337-slot-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 10px;
+  }
+  .b1337-slot-card {
+    background: #0b0e1b;
+    border: 1px solid #2a325c;
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .b1337-slot-thumb {
+    width: 90px;
+    height: 60px;
+    background: #000;
+    border: 1px solid #353f70;
+    border-radius: 4px;
+    image-rendering: pixelated;
+    flex-shrink: 0;
+  }
+  .b1337-input {
+    background: #090b14;
+    border: 1px solid #353f70;
+    color: var(--text);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.76rem;
+  }
   /* Toast notification */
   .b1337-toast {
     position: fixed;
@@ -582,7 +669,7 @@
 <script id="b1337-rom-b64" type="text/plain"></script>
 <script id="b1337-core">
 /* ============================================================================
- * 1337Boy(TM) GBA Emulator Core
+ * 1337Boy(TM) GBA Emulator Core v1.1
  * Copyright (c) 2026 Khamerron Kizer / ConsciousNode SoftWorks
  * License: MIT
  * House Philosophy: Xinu (Single File, Zero Dependencies, Offline-First)
@@ -599,6 +686,33 @@ const CRC32_TABLE = new Uint32Array(256);
       c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
     }
     CRC32_TABLE[i] = c >>> 0;
+  }
+})();
+
+// Precomputed 15-bit BGR555 -> 32-bit RGBA Lookup Tables (Raw sRGB + GBA LCD Color Correction)
+const BGR555_RAW_LUT = new Uint32Array(32768);
+const BGR555_CC_LUT  = new Uint32Array(32768);
+(function initColorLuts() {
+  for (let c = 0; c < 32768; c++) {
+    const r5 = c & 0x1F;
+    const g5 = (c >>> 5) & 0x1F;
+    const b5 = (c >>> 10) & 0x1F;
+    const r8 = (r5 << 3) | (r5 >>> 2);
+    const g8 = (g5 << 3) | (g5 >>> 2);
+    const b8 = (b5 << 3) | (b5 >>> 2);
+    BGR555_RAW_LUT[c] = (0xFF000000 | (b8 << 16) | (g8 << 8) | r8) >>> 0;
+
+    // Authentic AGB-001 LCD Color Correction ( Pokefan531 / Near matrix + 4.0 -> 2.2 gamma )
+    const rf = Math.pow(r5 / 31.0, 1.35);
+    const gf = Math.pow(g5 / 31.0, 1.35);
+    const bf = Math.pow(b5 / 31.0, 1.35);
+    const mr = Math.min(1.0, Math.max(0.0, 0.86 * rf + 0.10 * gf + 0.04 * bf));
+    const mg = Math.min(1.0, Math.max(0.0, 0.06 * rf + 0.78 * gf + 0.16 * bf));
+    const mb = Math.min(1.0, Math.max(0.0, 0.05 * rf + 0.13 * gf + 0.82 * bf));
+    const cr = Math.round(Math.pow(mr, 1.0 / 2.2) * 255) & 0xFF;
+    const cg = Math.round(Math.pow(mg, 1.0 / 2.2) * 255) & 0xFF;
+    const cb = Math.round(Math.pow(mb, 1.0 / 2.2) * 255) & 0xFF;
+    BGR555_CC_LUT[c] = (0xFF000000 | (cb << 16) | (cg << 8) | cr) >>> 0;
   }
 })();
 
@@ -674,8 +788,36 @@ class GBA {
     this.pal   = new Uint8Array(0x400);      // 1 KB Palette RAM
     this.vram  = new Uint8Array(0x18000);    // 96 KB VRAM
     this.oam   = new Uint8Array(0x400);      // 1 KB OAM
-    this.sram  = new Uint8Array(0x8000);     // 32 KB Save RAM (8-bit bus)
+    this.sram  = new Uint8Array(0x8000);     // 32 KB Save RAM (8-bit bus, initialized to 0xFF)
+    this.flash = new Uint8Array(0x20000);    // 64 KB / 128 KB Flash ROM (2 x 64 KB banks, initialized to 0xFF)
+    this.eeprom= new Uint8Array(0x2000);     // 512 B / 8 KB Serial EEPROM (initialized to 0xFF)
+    this.sram.fill(0xFF);
+    this.flash.fill(0xFF);
+    this.eeprom.fill(0xFF);
     this.rom   = new Uint8Array(0);          // Up to 32 MB Game Pak ROM
+
+    // Save Memory Controller State
+    // saveType: 'AUTO' | 'SRAM' | 'FLASH64' | 'FLASH128' | 'EEPROM' | 'NONE'
+    this.saveType = 'AUTO';
+    this.detectedSaveType = 'AUTO';
+    this.manualSaveType = null; // null = use auto-detected
+    // Flash state machine
+    this.flashStage = 0;        // 0=Idle, 1=Saw 0xAA@5555, 2=Saw 0x55@2AAA
+    this.flashCmd = 0;          // 0=None, 0xA0=ByteWrite, 0xB0=BankSwitch
+    this.flashIdMode = false;   // true after 0x90 command
+    this.flashEraseMode = false;// true after 0x80 command
+    this.flashBank = 0;         // 0 or 1 (for 128 KB Flash)
+    // Chip IDs:
+    // Flash 64 KB (512Kb): Macronix MX29L512 (0x1CC2: manuf=0xC2, dev=0x1C)
+    // Flash 128 KB (1Mb):  Sanyo LE26FV10N1TS (0x1362: manuf=0x62, dev=0x13)
+    this.flashManuf64 = 0xC2;
+    this.flashDev64   = 0x1C;
+    this.flashManuf128= 0x62;
+    this.flashDev128  = 0x13;
+    // EEPROM state
+    this.eepromAddrBits = 0;    // 0=auto, 6=512B (64x8B), 14=8KB (1024x8B)
+    this.eepromReadAddr = 0;
+    this.eepromUsed = false;
 
     // Typed Views for Fast 16/32-bit Little-Endian Access
     this.bios16  = new Uint16Array(this.bios.buffer);
@@ -698,6 +840,7 @@ class GBA {
     // Framebuffer (240x160 RGBA)
     this.fb = new Uint8ClampedArray(240 * 160 * 4);
     this.fb32 = new Uint32Array(this.fb.buffer);
+    this.colorCorrection = false;
 
     // Scanline compositing buffers (allocated once, zero allocation in hot loop)
     this.lineBgColor  = [new Uint16Array(240), new Uint16Array(240), new Uint16Array(240), new Uint16Array(240)];
@@ -711,6 +854,22 @@ class GBA {
     // CPU Registers
     this.r = new Int32Array(16);
     this.cpsr = MODE_SYS;
+
+    // 2-Stage Instruction Prefetch Pipeline
+    this.pipe0  = 0;
+    this.pipe1  = 0;
+    this.pipePc = -1; // Address corresponding to pipe0, or -1 when flushed
+
+    // Waitstate Timing Lookup Tables (WAITCNT 0x04000204)
+    this.ws16N = new Uint8Array(16);
+    this.ws16S = new Uint8Array(16);
+    this.ws32N = new Uint8Array(16);
+    this.ws32S = new Uint8Array(16);
+    this.prefetchEnabled = false;
+    this.prefetchCount = 0;
+    this.prefetchDuty  = 0;
+    this.memCycles = 0;
+    this.dmaCyclesStall = 0;
 
     // Banked Registers
     this.bankUsr = new Int32Array(7); // R8..R14 usr/sys
@@ -731,8 +890,9 @@ class GBA {
     this.shifterCarry = 0;
 
     // Open-bus & BIOS read latch
-    this.biosLastFetch = 0xE129F000; // Post-startup/IRQ default BIOS latch
+    this.biosLastFetch = 0xE129F000; // Post-startup/SoftReset default BIOS latch
     this.lastFetchedOpcode = 0xE129F000;
+    this.inIntrWaitMask = 0;
 
     // Halt / Scheduler State
     this.halted = false;
@@ -764,14 +924,26 @@ class GBA {
     this.fifoAHead = 0; this.fifoATail = 0; this.fifoACount = 0; this.fifoALatch = 0;
     this.fifoBHead = 0; this.fifoBTail = 0; this.fifoBCount = 0; this.fifoBLatch = 0;
 
-    // PSG Audio state
+    // PSG Audio state (Channels 1..4 + Wave RAM 2x16 bytes)
+    this.waveRam  = new Uint8Array(32); // Two 16-byte banks (64 4-bit samples)
     this.psgPhase = new Float32Array(4);
+    this.psgVol   = new Uint8Array(4);
+    this.psgEnvTimer = new Int32Array(4);
+    this.psgLen   = new Int32Array(4);
+    this.psgEnabled = new Uint8Array(4);
+    this.psgFreq  = new Int32Array(4);
+    this.psgSweepTimer = 0;
+    this.psgFrameSeqStep = 0;
+    this.psgFrameSeqSub  = 0;
     this.psgLfsr  = 0x7FFF;
     this.audioRingL = new Float32Array(8192);
     this.audioRingR = new Float32Array(8192);
     this.audioWritePos = 0;
     this.audioReadPos  = 0;
     this.audioSampleTimer = 0;
+
+    // Cheats Engine
+    this.cheats = []; // Array of { code, desc, enabled, addr, val, width, type }
 
     // Tier 3: GPIO / Seiko S-3511A Real-Time Clock (RTC) state
     this.gpioData = 0;
@@ -812,10 +984,8 @@ class GBA {
           if (!msg || msg.sender === this.linkId) return;
           this.linkPeerConnected = true;
           if (msg.type === 'SIO_XFER') {
-            // Store incoming 16-bit word in SIOMULTI1 (0x122) & SIODATA8 (0x12A)
             this.io16[0x122 >> 1] = msg.data & 0xFFFF;
             this.io16[0x12A >> 1] = msg.data & 0xFFFF;
-            // Clear start bit (bit 7 of SIOCNT 0x128) and trigger SIO IRQ if bit 14 set
             const siocnt = this.io16[0x128 >> 1];
             this.io16[0x128 >> 1] = siocnt & ~0x0080;
             if (siocnt & 0x4000) {
@@ -831,36 +1001,93 @@ class GBA {
 
   initBios() {
     this.bios.fill(0);
-    // Write custom 1337Boy ARM BIOS vectors and IRQ dispatcher
     const w32 = (addr, val) => { this.bios32[addr >> 2] = val >>> 0; };
 
     // 0x0000: Reset vector -> B 0x0060
     w32(0x0000, 0xEA000016);
     // 0x0004: Undefined instruction -> B 0x0060
     w32(0x0004, 0xEA000015);
-    // 0x0008: SWI vector -> B 0x0040 (HLE SWI trap + BX LR)
+    // 0x0008: SWI vector -> B 0x0040
     w32(0x0008, 0xEA00000C);
     // 0x0018: IRQ vector -> B 0x0128 (Hardware-accurate IRQ stub)
     w32(0x0018, 0xEA000042);
 
-    // 0x0040: SWI handler stub (CPU intercepts SWI in HLE, or if jumped here returns cleanly)
+    // 0x0040: SWI handler stub
     w32(0x0040, 0xE1B0F00E); // MOVS PC, LR
+    w32(0x0044, 0xE3A02004); // MOV R2, #4 (SWI exit prefetch signature)
+    w32(0x0048, 0xE3A02004);
 
     // 0x0060: Reset stub -> jump to 0x08000000
     w32(0x0060, 0xE3A00302); // MOV R0, #0x08000000
     w32(0x0064, 0xE12FFF10); // BX R0
 
-    // 0x0128: Official-compatible IRQ dispatcher at 0x0128..0x0140:
-    // Saves R0-R3, R12, LR_irq onto SP_irq, calls [0x03007FFC], restores and returns:
+    // 0x0128: Official-compatible IRQ dispatcher at 0x0128..0x0144:
+    // Saves R0-R3, R12, LR_irq onto SP_irq, calls [0x03007FFC], restores and returns.
+    // Note how our 2-stage pipeline naturally fetches:
+    // - 0x0134 + 8 = 0x013C (0xE25EF004) when LDR PC, [R0, #-4] jumps to user ISR (during IRQ)
+    // - 0x013C + 8 = 0x0144 (0xE55EC002) when SUBS PC, LR, #4 returns from IRQ (after IRQ)
     w32(0x0128, 0xE92D500F); // STMDB SP!, {R0-R3, R12, LR}
     w32(0x012C, 0xE3A00301); // MOV R0, #0x04000000
     w32(0x0130, 0xE28FE000); // ADR LR, 0x0138
     w32(0x0134, 0xE510F004); // LDR PC, [R0, #-4]  (reads 0x03FFFFFC -> mirrors 0x03007FFC!)
     w32(0x0138, 0xE8BD500F); // LDMIA SP!, {R0-R3, R12, LR}
     w32(0x013C, 0xE25EF004); // SUBS PC, LR, #4
+    w32(0x0140, 0xE55EC002); // Post-IRQ BIOS opcode at 0x0140
+    w32(0x0144, 0xE55EC002); // Post-IRQ BIOS opcode at 0x0144 (fetched when 0x013C executes)
 
-    // 0x0188: IntrWait / VBlankIntrWait return latch signature
+    // 0x0188: IntrWait / VBlankIntrWait / MidBoot return latch signature
     w32(0x0188, 0xE129F000);
+  }
+
+  updateWaitstates(waitcnt) {
+    const sramWait = [4, 3, 2, 8][waitcnt & 3];
+    const ws0N     = [4, 3, 2, 8][(waitcnt >>> 2) & 3];
+    const ws0S     = (waitcnt & 0x0010) ? 1 : 2;
+    const ws1N     = [4, 3, 2, 8][(waitcnt >>> 5) & 3];
+    const ws1S     = (waitcnt & 0x0080) ? 1 : 4;
+    const ws2N     = [4, 3, 2, 8][(waitcnt >>> 8) & 3];
+    const ws2S     = (waitcnt & 0x0400) ? 1 : 8;
+    this.prefetchEnabled = (waitcnt & 0x4000) !== 0;
+    if (!this.prefetchEnabled) {
+      this.prefetchCount = 0;
+      this.prefetchDuty  = 0;
+    }
+
+    // Populate 16-region tables (0x0..0xF)
+    for (let i = 0; i < 16; i++) {
+      this.ws16N[i] = 1;
+      this.ws16S[i] = 1;
+      this.ws32N[i] = 1;
+      this.ws32S[i] = 1;
+    }
+    // 0x02: EWRAM (16-bit bus, 2 waitstates -> 3 cycles per 16-bit, 6 cycles per 32-bit)
+    this.ws16N[0x2] = 3; this.ws16S[0x2] = 3;
+    this.ws32N[0x2] = 6; this.ws32S[0x2] = 6;
+    // 0x05, 0x06: Palette RAM & VRAM (16-bit bus -> 1 cycle per 16-bit, 2 cycles per 32-bit)
+    this.ws16N[0x5] = 1; this.ws16S[0x5] = 1;
+    this.ws32N[0x5] = 2; this.ws32S[0x5] = 2;
+    this.ws16N[0x6] = 1; this.ws16S[0x6] = 1;
+    this.ws32N[0x6] = 2; this.ws32S[0x6] = 2;
+    // 0x08, 0x09: ROM Wait State 0 (16-bit bus)
+    this.ws16N[0x8] = this.ws16N[0x9] = 1 + ws0N;
+    this.ws16S[0x8] = this.ws16S[0x9] = 1 + ws0S;
+    this.ws32N[0x8] = this.ws32N[0x9] = (1 + ws0N) + (1 + ws0S);
+    this.ws32S[0x8] = this.ws32S[0x9] = (1 + ws0S) * 2;
+    // 0x0A, 0x0B: ROM Wait State 1 (16-bit bus)
+    this.ws16N[0xA] = this.ws16N[0xB] = 1 + ws1N;
+    this.ws16S[0xA] = this.ws16S[0xB] = 1 + ws1S;
+    this.ws32N[0xA] = this.ws32N[0xB] = (1 + ws1N) + (1 + ws1S);
+    this.ws32S[0xA] = this.ws32S[0xB] = (1 + ws1S) * 2;
+    // 0x0C, 0x0D: ROM Wait State 2 (16-bit bus)
+    this.ws16N[0xC] = this.ws16N[0xD] = 1 + ws2N;
+    this.ws16S[0xC] = this.ws16S[0xD] = 1 + ws2S;
+    this.ws32N[0xC] = this.ws32N[0xD] = (1 + ws2N) + (1 + ws2S);
+    this.ws32S[0xC] = this.ws32S[0xD] = (1 + ws2S) * 2;
+    // 0x0E, 0x0F: Cart SRAM / Flash (8-bit bus)
+    this.ws16N[0xE] = this.ws16N[0xF] = 1 + sramWait;
+    this.ws16S[0xE] = this.ws16S[0xF] = 1 + sramWait;
+    this.ws32N[0xE] = this.ws32N[0xF] = 1 + sramWait;
+    this.ws32S[0xE] = this.ws32S[0xF] = 1 + sramWait;
   }
 
   close() { if (this.linkChannel) { try { this.linkChannel.close(); } catch(e){} } }
@@ -894,6 +1121,10 @@ class GBA {
     this.r[15] = 0x08000000;      // PC -> Cartridge entry point
     this.cpsr  = MODE_SYS;        // System mode, ARM state, IRQ/FIQ enabled
 
+    this.pipe0  = 0;
+    this.pipe1  = 0;
+    this.pipePc = -1;
+
     this.spsr = 0;
     this.spsrIrq = 0;
     this.spsrSvc = 0;
@@ -902,14 +1133,29 @@ class GBA {
     this.spsrUnd = 0;
 
     // Documented Post-BIOS I/O Defaults
-    this.io16[0x000 >> 1] = 0x0080; // DISPCNT (Forced blank initially or 0x0080)
+    this.io16[0x000 >> 1] = 0x0080; // DISPCNT
     this.io16[0x020 >> 1] = 0x0100; // BG2PA = 1.0
     this.io16[0x026 >> 1] = 0x0100; // BG2PD = 1.0
     this.io16[0x030 >> 1] = 0x0100; // BG3PA = 1.0
     this.io16[0x036 >> 1] = 0x0100; // BG3PD = 1.0
     this.io16[0x088 >> 1] = 0x0200; // SOUNDBIAS = 0x0200
     this.io16[0x130 >> 1] = 0x03FF; // KEYINPUT (all released)
+    this.io16[0x204 >> 1] = 0x0000; // WAITCNT = 0x0000
     this.io[0x300] = 0x01;          // POSTFLG = 1
+
+    this.updateWaitstates(0);
+    this.prefetchCount = 0;
+    this.prefetchDuty  = 0;
+    this.memCycles = 0;
+    this.dmaCyclesStall = 0;
+
+    // Reset volatile Flash command state while preserving battery-backed save data
+    this.flashStage = 0;
+    this.flashCmd   = 0;
+    this.flashIdMode = false;
+    this.flashEraseMode = false;
+    this.flashBank  = 0;
+    this.eepromReadAddr = 0;
 
     this.bgRefX[0] = 0; this.bgRefY[0] = 0;
     this.bgRefX[1] = 0; this.bgRefY[1] = 0;
@@ -927,6 +1173,14 @@ class GBA {
 
     this.fifoAHead = 0; this.fifoATail = 0; this.fifoACount = 0; this.fifoALatch = 0;
     this.fifoBHead = 0; this.fifoBTail = 0; this.fifoBCount = 0; this.fifoBLatch = 0;
+    this.psgVol.fill(0);
+    this.psgEnvTimer.fill(0);
+    this.psgLen.fill(0);
+    this.psgEnabled.fill(0);
+    this.psgFreq.fill(0);
+    this.psgSweepTimer = 0;
+    this.psgFrameSeqStep = 0;
+    this.psgFrameSeqSub  = 0;
 
     this.halted = false;
     this.cycles = 0;
@@ -934,6 +1188,7 @@ class GBA {
     this.vcount = 0;
     this.biosLastFetch = 0xE129F000;
     this.lastFetchedOpcode = 0xE129F000;
+    this.inIntrWaitMask = 0;
   }
 
   loadRom(u8) {
@@ -949,14 +1204,101 @@ class GBA {
     this.rom16 = new Uint16Array(this.rom.buffer);
     this.rom32 = new Uint32Array(this.rom.buffer);
 
+    // Fresh erased battery save state (all 0xFF!)
+    this.sram.fill(0xFF);
+    this.flash.fill(0xFF);
+    this.eeprom.fill(0xFF);
+    this.eepromAddrBits = 0;
+    this.eepromUsed = false;
+
     this.romCrc32 = computeCRC32(stripped);
     this.parseHeader(stripped);
+    this.detectSaveType(stripped);
     this.reset();
     this.loadAutosave();
   }
 
+  detectSaveType(u8) {
+    // Scan ROM for standard Nintendo SDK save ID strings:
+    // "EEPROM_V", "SRAM_V", "SRAM_F_V", "FLASH_V", "FLASH512_V", "FLASH1M_V"
+    let ascii = '';
+    const CHUNK = 0x8000;
+    for (let i = 0; i < u8.length; i += CHUNK) {
+      ascii += String.fromCharCode.apply(null, u8.subarray(i, Math.min(u8.length, i + CHUNK)));
+    }
+    if (ascii.indexOf('FLASH1M_V') !== -1) {
+      this.detectedSaveType = 'FLASH128';
+    } else if (ascii.indexOf('FLASH512_V') !== -1 || ascii.indexOf('FLASH_V') !== -1) {
+      this.detectedSaveType = 'FLASH64';
+    } else if (ascii.indexOf('EEPROM_V') !== -1) {
+      this.detectedSaveType = 'EEPROM';
+    } else if (ascii.indexOf('SRAM_V') !== -1 || ascii.indexOf('SRAM_F_V') !== -1) {
+      this.detectedSaveType = 'SRAM';
+    } else {
+      this.detectedSaveType = 'AUTO';
+    }
+    this.saveType = this.manualSaveType || this.detectedSaveType;
+  }
+
+  setSaveType(type) {
+    const valid = ['AUTO', 'SRAM', 'FLASH64', 'FLASH128', 'EEPROM', 'EEPROM512', 'EEPROM8K', 'NONE'];
+    const up = String(type || 'AUTO').toUpperCase();
+    if (valid.indexOf(up) === -1) return this.saveType;
+    if (up === 'EEPROM512') {
+      this.manualSaveType = 'EEPROM';
+      this.saveType = 'EEPROM';
+      this.eepromAddrBits = 6;
+    } else if (up === 'EEPROM8K') {
+      this.manualSaveType = 'EEPROM';
+      this.saveType = 'EEPROM';
+      this.eepromAddrBits = 14;
+    } else if (up === 'AUTO') {
+      this.manualSaveType = null;
+      this.saveType = this.detectedSaveType;
+    } else {
+      this.manualSaveType = up;
+      this.saveType = up;
+    }
+    return this.saveType;
+  }
+
+  exportSaveBytes() {
+    const st = this.saveType === 'AUTO' ? (this.eepromUsed ? 'EEPROM' : 'SRAM') : this.saveType;
+    if (st === 'FLASH128') return new Uint8Array(this.flash.subarray(0, 0x20000));
+    if (st === 'FLASH64')  return new Uint8Array(this.flash.subarray(0, 0x10000));
+    if (st === 'EEPROM') {
+      const len = (this.eepromAddrBits === 14) ? 0x2000 : 0x200;
+      return new Uint8Array(this.eeprom.subarray(0, len));
+    }
+    if (st === 'NONE') return new Uint8Array(0);
+    return new Uint8Array(this.sram.subarray(0, 0x8000));
+  }
+
+  importSaveBytes(u8) {
+    const bytes = (u8 instanceof Uint8Array) ? u8 : new Uint8Array(u8);
+    if (bytes.length === 0x20000) {
+      this.flash.set(bytes.subarray(0, 0x20000));
+      if (this.saveType === 'AUTO') this.saveType = 'FLASH128';
+    } else if (bytes.length === 0x10000) {
+      this.flash.fill(0xFF);
+      this.flash.set(bytes.subarray(0, 0x10000));
+      if (this.saveType === 'AUTO') this.saveType = 'FLASH64';
+    } else if (bytes.length === 0x200 || bytes.length === 0x2000) {
+      this.eeprom.fill(0xFF);
+      this.eeprom.set(bytes.subarray(0, bytes.length));
+      this.eepromAddrBits = (bytes.length === 0x2000) ? 14 : 6;
+      this.eepromUsed = true;
+      if (this.saveType === 'AUTO') this.saveType = 'EEPROM';
+    } else {
+      this.sram.fill(0xFF);
+      this.sram.set(bytes.subarray(0, Math.min(bytes.length, 0x8000)));
+      this.flash.set(bytes.subarray(0, Math.min(bytes.length, 0x20000)));
+    }
+    this.sramDirty = true;
+    this.saveAutosave();
+  }
+
   stripPolyglotTail(u8) {
-    // Search for the reset sequence + marker comment '<!--1337BOY-POLYGLOT-START-->'
     const seqBytes = new Uint8Array(B1337_RESET_SEQ.length);
     for (let i = 0; i < B1337_RESET_SEQ.length; i++) {
       seqBytes[i] = B1337_RESET_SEQ.charCodeAt(i);
@@ -1019,8 +1361,8 @@ class GBA {
       const key = '1337boy_sram_' + this.romCrc32.toString(16);
       const saved = localStorage.getItem(key);
       if (saved) {
-        const bytes = base64ToUint8(saved);
-        this.sram.set(bytes.subarray(0, 0x8000));
+        this.importSaveBytes(base64ToUint8(saved));
+        this.sramDirty = false;
       }
     } catch (e) {}
   }
@@ -1030,8 +1372,230 @@ class GBA {
     this.sramDirty = false;
     try {
       const key = '1337boy_sram_' + this.romCrc32.toString(16);
-      localStorage.setItem(key, uint8ToBase64(this.sram));
+      localStorage.setItem(key, uint8ToBase64(this.exportSaveBytes()));
     } catch (e) {}
+  }
+
+  // ==========================================================================
+  // Save Memory Subsystem: SRAM (32KB), Flash (64KB/128KB), EEPROM (512B/8KB)
+  // ==========================================================================
+
+  readSave8(addr) {
+    const st = this.saveType;
+    if (st === 'NONE') {
+      return 0xFF;
+    }
+    if (st === 'FLASH64' || st === 'FLASH128') {
+      const off = addr & 0xFFFF;
+      if (this.flashIdMode) {
+        if (off === 0x0000) return (st === 'FLASH128') ? this.flashManuf128 : this.flashManuf64;
+        if (off === 0x0001) return (st === 'FLASH128') ? this.flashDev128   : this.flashDev64;
+      }
+      const bank = (st === 'FLASH128') ? (this.flashBank & 1) : 0;
+      return this.flash[(bank << 16) | off];
+    }
+    // SRAM (32 KB mirrored across 0x0E000000..0x0FFFFFFF) or AUTO
+    return this.sram[addr & 0x7FFF];
+  }
+
+  writeSave8(addr, val) {
+    val &= 0xFF;
+    const off = addr & 0xFFFF;
+
+    // Heuristic auto-upgrade if saveType is 'AUTO'
+    if (this.saveType === 'AUTO') {
+      if (this.flashStage === 0 && off === 0x5555 && val === 0xAA) {
+        this.flashStage = 1;
+        this.sram[addr & 0x7FFF] = val;
+        this.sramDirty = true;
+        return;
+      } else if (this.flashStage === 1 && off === 0x2AAA && val === 0x55) {
+        this.flashStage = 2;
+        this.sram[addr & 0x7FFF] = val;
+        this.sramDirty = true;
+        return;
+      } else if (this.flashStage === 2 && off === 0x5555 && (val === 0x90 || val === 0x80 || val === 0xA0 || val === 0xB0 || val === 0xF0)) {
+        // Confirmed Flash protocol on a ROM without ID string!
+        this.saveType = 'FLASH128';
+        this.sram[0x5555] = 0xFF;
+        this.sram[0x2AAA] = 0xFF;
+        // Fall through to execute the Flash command in stage 2
+      } else {
+        this.flashStage = 0;
+        this.saveType = 'SRAM';
+        this.sram[addr & 0x7FFF] = val;
+        this.sramDirty = true;
+        return;
+      }
+    }
+
+    if (this.saveType === 'NONE') {
+      return;
+    }
+
+    if (this.saveType === 'SRAM') {
+      this.sram[addr & 0x7FFF] = val;
+      this.sramDirty = true;
+      return;
+    }
+
+    if (this.saveType === 'FLASH64' || this.saveType === 'FLASH128') {
+      const is128 = (this.saveType === 'FLASH128');
+      const bank  = is128 ? (this.flashBank & 1) : 0;
+
+      // Active sub-command data phase (0xA0 Byte Write or 0xB0 Bank Switch)
+      if (this.flashCmd === 0xA0) {
+        this.flash[(bank << 16) | off] &= val;
+        this.flashCmd = 0;
+        this.flashStage = 0;
+        this.sramDirty = true;
+        return;
+      }
+      if (this.flashCmd === 0xB0) {
+        if (is128 && off === 0x0000) {
+          this.flashBank = val & 1;
+        }
+        this.flashCmd = 0;
+        this.flashStage = 0;
+        return;
+      }
+
+      // 3-step command state machine (0xAA @ 0x5555 -> 0x55 @ 0x2AAA -> CMD @ 0x5555 or Sector @ 0xX000)
+      if (this.flashStage === 0) {
+        if (off === 0x5555 && val === 0xAA) {
+          this.flashStage = 1;
+        } else if (val === 0xF0) {
+          this.flashIdMode = false;
+          this.flashEraseMode = false;
+          this.flashCmd = 0;
+        }
+      } else if (this.flashStage === 1) {
+        if (off === 0x2AAA && val === 0x55) {
+          this.flashStage = 2;
+        } else if (off === 0x5555 && val === 0xAA) {
+          this.flashStage = 1;
+        } else {
+          this.flashStage = 0;
+        }
+      } else if (this.flashStage === 2) {
+        this.flashStage = 0;
+        if (this.flashEraseMode && val === 0x30) {
+          // 4 KB Sector Erase (0x1000 bytes at (bank << 16) | (off & 0xF000))
+          const sectorStart = (bank << 16) | (off & 0xF000);
+          this.flash.fill(0xFF, sectorStart, sectorStart + 0x1000);
+          this.flashEraseMode = false;
+          this.sramDirty = true;
+          return;
+        }
+        if (off === 0x5555) {
+          switch (val) {
+            case 0x90: // Enter Chip ID Mode
+              this.flashIdMode = true;
+              this.flashEraseMode = false;
+              break;
+            case 0xF0: // Exit Chip ID Mode / Reset
+              this.flashIdMode = false;
+              this.flashEraseMode = false;
+              this.flashCmd = 0;
+              break;
+            case 0x80: // Erase Setup
+              this.flashEraseMode = true;
+              break;
+            case 0x10: // Erase Entire Chip (64 KB or 128 KB)
+              if (this.flashEraseMode) {
+                this.flash.fill(0xFF, 0, is128 ? 0x20000 : 0x10000);
+                this.flashEraseMode = false;
+                this.sramDirty = true;
+              }
+              break;
+            case 0xA0: // Prepare Single-Byte Write
+              this.flashCmd = 0xA0;
+              this.flashEraseMode = false;
+              break;
+            case 0xB0: // Prepare Bank Switch (128 KB only)
+              if (is128) {
+                this.flashCmd = 0xB0;
+              }
+              this.flashEraseMode = false;
+              break;
+          }
+        }
+      }
+    }
+  }
+
+  // EEPROM DMA3 Serial Bitstream Handler (0x0D000000..0x0DFFFFFF)
+  handleEepromDmaWrite(src, srcDelta, count) {
+    this.eepromUsed = true;
+    if (this.saveType === 'AUTO') this.saveType = 'EEPROM';
+
+    // Read bitstream from src (1 bit per halfword in bit 0)
+    const bits = new Uint8Array(count);
+    let ptr = src;
+    for (let i = 0; i < count; i++) {
+      bits[i] = this.read16(ptr) & 1;
+      ptr = (ptr + srcDelta) >>> 0;
+    }
+    if (count < 2 || bits[0] !== 1) return;
+
+    const isReadReq = (bits[1] === 1);
+    if (isReadReq) {
+      // Read request: [1, 1, addr(6 or 14 bits), 0] -> count is 9 (or 8) for 6-bit, 17 (or 16) for 14-bit
+      let addrBits = this.eepromAddrBits;
+      if (count === 9 || count === 8) addrBits = 6;
+      else if (count === 17 || count === 16) addrBits = 14;
+      else if (!addrBits) addrBits = (count <= 9) ? 6 : 14;
+      this.eepromAddrBits = addrBits;
+
+      let blockAddr = 0;
+      for (let i = 0; i < addrBits && (2 + i) < count; i++) {
+        blockAddr = (blockAddr << 1) | bits[2 + i];
+      }
+      const maxMask = (addrBits === 6) ? 0x3F : 0x3FF;
+      this.eepromReadAddr = blockAddr & maxMask;
+    } else {
+      // Write request: [1, 0, addr(6 or 14 bits), data(64 bits), 0] -> count is 73 (or 72) for 6-bit, 81 (or 80) for 14-bit
+      let addrBits = this.eepromAddrBits;
+      if (count === 73 || count === 72) addrBits = 6;
+      else if (count === 81 || count === 80) addrBits = 14;
+      else if (!addrBits) addrBits = (count <= 73) ? 6 : 14;
+      this.eepromAddrBits = addrBits;
+
+      let blockAddr = 0;
+      for (let i = 0; i < addrBits && (2 + i) < count; i++) {
+        blockAddr = (blockAddr << 1) | bits[2 + i];
+      }
+      const maxMask = (addrBits === 6) ? 0x3F : 0x3FF;
+      const baseOff = (blockAddr & maxMask) * 8;
+      const dataStart = 2 + addrBits;
+      for (let b = 0; b < 8; b++) {
+        let byteVal = 0;
+        for (let bit = 0; bit < 8; bit++) {
+          const idx = dataStart + b * 8 + bit;
+          const v = (idx < count) ? bits[idx] : 0;
+          byteVal = (byteVal << 1) | v;
+        }
+        this.eeprom[baseOff + b] = byteVal & 0xFF;
+      }
+      this.sramDirty = true;
+    }
+  }
+
+  handleEepromDmaRead(dst, dstDelta, count) {
+    this.eepromUsed = true;
+    if (this.saveType === 'AUTO') this.saveType = 'EEPROM';
+    const baseOff = this.eepromReadAddr * 8;
+    let ptr = dst;
+    for (let i = 0; i < count; i++) {
+      let bit = 1; // First 4 bits (0..3) are dummy bits
+      if (i >= 4 && i < 68) {
+        const dIdx = i - 4;
+        const byteVal = this.eeprom[baseOff + (dIdx >>> 3)];
+        bit = (byteVal >>> (7 - (dIdx & 7))) & 1;
+      }
+      this.write16(ptr, bit);
+      ptr = (ptr + dstDelta) >>> 0;
+    }
   }
 
   // ==========================================================================
@@ -1039,7 +1603,6 @@ class GBA {
   // ==========================================================================
 
   vramMirrorOffset(addr) {
-    // 128 KB window (0x1FFFF), upper 64 KB mirrors 0x10000..0x17FFF at 0x18000..0x1FFFF
     let off = addr & 0x1FFFF;
     if (off >= 0x18000) off -= 0x8000;
     return off;
@@ -1050,7 +1613,6 @@ class GBA {
   }
 
   readBios32(addr) {
-    // BIOS is only readable when PC is inside BIOS (< 0x4000)
     if ((this.r[15] >>> 0) < 0x4000) {
       const val = this.bios32[(addr & 0x3FFC) >>> 2];
       this.biosLastFetch = val;
@@ -1059,9 +1621,63 @@ class GBA {
     return this.biosLastFetch >>> 0;
   }
 
+  // Fast Instruction Fetch Helpers (update BIOS latch on BIOS fetches; do not add data waitstates)
+  fetchArmOpcode(addr) {
+    addr = (addr & ~3) >>> 0;
+    const region = addr >>> 24;
+    switch (region) {
+      case 0x08: case 0x09: case 0x0A: case 0x0B: case 0x0C: case 0x0D: {
+        const off = addr & 0x1FFFFFC;
+        if (off < this.rom.length) return this.rom32[off >>> 2];
+        const lo = (addr >>> 1) & 0xFFFF;
+        const hi = ((addr + 2) >>> 1) & 0xFFFF;
+        return (lo | (hi << 16)) >>> 0;
+      }
+      case 0x03:
+        return this.iwram32[(addr & 0x7FFC) >>> 2];
+      case 0x02:
+        return this.ewram32[(addr & 0x3FFFC) >>> 2];
+      case 0x00:
+        if (addr < 0x4000) {
+          const val = this.bios32[addr >>> 2];
+          this.biosLastFetch = val;
+          return val;
+        }
+        return this.lastFetchedOpcode >>> 0;
+      default:
+        return this.read32Aligned(addr);
+    }
+  }
+
+  fetchThumbOpcode(addr) {
+    addr = (addr & ~1) >>> 0;
+    const region = addr >>> 24;
+    switch (region) {
+      case 0x08: case 0x09: case 0x0A: case 0x0B: case 0x0C: case 0x0D: {
+        const off = addr & 0x1FFFFFE;
+        if (off < this.rom.length) return this.rom16[off >>> 1];
+        return (addr >>> 1) & 0xFFFF;
+      }
+      case 0x03:
+        return this.iwram16[(addr & 0x7FFE) >>> 1];
+      case 0x02:
+        return this.ewram16[(addr & 0x3FFFE) >>> 1];
+      case 0x00:
+        if (addr < 0x4000) {
+          const w = this.bios32[(addr & 0x3FFC) >>> 2];
+          this.biosLastFetch = w;
+          return (w >>> ((addr & 2) << 3)) & 0xFFFF;
+        }
+        return this.lastFetchedOpcode & 0xFFFF;
+      default:
+        return this.read16(addr);
+    }
+  }
+
   read8(addr) {
     addr >>>= 0;
     const region = addr >>> 24;
+    if (region < 16) this.memCycles += this.ws16N[region];
     switch (region) {
       case 0x00: {
         if (addr >= 0x4000) return (this.readOpenBus32(addr) >>> ((addr & 3) << 3)) & 0xFF;
@@ -1083,14 +1699,14 @@ class GBA {
       case 0x08: case 0x09:
       case 0x0A: case 0x0B:
       case 0x0C: case 0x0D: {
+        this.prefetchCount = 0;
         const off = addr & 0x1FFFFFF;
         if (off < this.rom.length) return this.rom[off];
-        // Out-of-bounds ROM open-bus returns (addr/2) & 0xFFFF
         const ob = ((addr >>> 1) & 0xFFFF);
         return (addr & 1) ? (ob >>> 8) : (ob & 0xFF);
       }
       case 0x0E: case 0x0F:
-        return this.sram[addr & 0x7FFF];
+        return this.readSave8(addr);
       default:
         return (this.readOpenBus32(addr) >>> ((addr & 3) << 3)) & 0xFF;
     }
@@ -1099,8 +1715,9 @@ class GBA {
   read16(addr) {
     addr >>>= 0;
     const region = addr >>> 24;
+    if (region < 16) this.memCycles += this.ws16N[region];
     if (region === 0x0E || region === 0x0F) {
-      const b = this.sram[addr & 0x7FFF];
+      const b = this.readSave8(addr);
       return b | (b << 8);
     }
     addr = (addr & ~1) >>> 0;
@@ -1122,11 +1739,20 @@ class GBA {
         return this.vram16[this.vramMirrorOffset(addr) >>> 1];
       case 0x07:
         return this.oam16[(addr & 0x3FE) >>> 1];
+      case 0x0D: {
+        this.prefetchCount = 0;
+        const off = addr & 0x1FFFFFE;
+        if ((this.saveType === 'EEPROM' || this.eepromUsed) && (off >= this.rom.length || addr >= 0x0DFFFF00)) {
+          return 1; // EEPROM Ready bit = 1
+        }
+        if (off < this.rom.length) return this.rom16[off >>> 1];
+        return (addr >>> 1) & 0xFFFF;
+      }
       case 0x08: case 0x09:
       case 0x0A: case 0x0B:
-      case 0x0C: case 0x0D: {
+      case 0x0C: {
+        this.prefetchCount = 0;
         const off = addr & 0x1FFFFFE;
-        // Tier 3: GPIO / RTC port check (0x080000C4, 0x080000C6, 0x080000C8)
         if (off >= 0xC4 && off <= 0xC8 && (this.gpioCnt & 1)) {
           if (off === 0xC4) return this.gpioData;
           if (off === 0xC6) return this.gpioDir;
@@ -1134,11 +1760,6 @@ class GBA {
         }
         if (off < this.rom.length) return this.rom16[off >>> 1];
         return (addr >>> 1) & 0xFFFF;
-      }
-      case 0x0E: case 0x0F: {
-        // 8-bit bus repeats byte across both lanes
-        const b = this.sram[addr & 0x7FFF];
-        return b | (b << 8);
       }
       default:
         return (this.readOpenBus32(addr) >>> ((addr & 2) << 3)) & 0xFFFF;
@@ -1148,8 +1769,9 @@ class GBA {
   read32Aligned(addr) {
     addr >>>= 0;
     const region = addr >>> 24;
+    if (region < 16) this.memCycles += this.ws32N[region];
     if (region === 0x0E || region === 0x0F) {
-      const b = this.sram[addr & 0x7FFF];
+      const b = this.readSave8(addr);
       return (b * 0x01010101) >>> 0;
     }
     addr = (addr & ~3) >>> 0;
@@ -1172,16 +1794,12 @@ class GBA {
       case 0x08: case 0x09:
       case 0x0A: case 0x0B:
       case 0x0C: case 0x0D: {
+        this.prefetchCount = 0;
         const off = addr & 0x1FFFFFC;
         if (off < this.rom.length) return this.rom32[off >>> 2];
         const lo = (addr >>> 1) & 0xFFFF;
         const hi = ((addr + 2) >>> 1) & 0xFFFF;
         return (lo | (hi << 16)) >>> 0;
-      }
-      case 0x0E: case 0x0F: {
-        // 8-bit SRAM bus repeats byte across all 4 bytes
-        const b = this.sram[addr & 0x7FFF];
-        return (b * 0x01010101) >>> 0;
       }
       default:
         return this.readOpenBus32(addr);
@@ -1217,6 +1835,7 @@ class GBA {
     addr >>>= 0;
     val &= 0xFF;
     const region = addr >>> 24;
+    if (region < 16) this.memCycles += this.ws16N[region];
     switch (region) {
       case 0x02:
         this.ewram[addr & 0x3FFFF] = val;
@@ -1228,11 +1847,9 @@ class GBA {
         this.writeIo8(addr & 0xFFFFFF, val);
         break;
       case 0x05:
-        // 8-bit write to Palette RAM duplicates byte to halfword!
         this.pal16[(addr & 0x3FE) >>> 1] = val | (val << 8);
         break;
       case 0x06: {
-        // 8-bit write to BG VRAM duplicates byte to halfword; ignored in OBJ VRAM
         const off = this.vramMirrorOffset(addr) & ~1;
         const mode = this.io16[0] & 7;
         const objBoundary = (mode >= 3) ? 0x14000 : 0x10000;
@@ -1242,11 +1859,9 @@ class GBA {
         break;
       }
       case 0x07:
-        // 8-bit writes to OAM are ignored by GBA hardware!
         break;
       case 0x0E: case 0x0F:
-        this.sram[addr & 0x7FFF] = val;
-        this.sramDirty = true;
+        this.writeSave8(addr, val);
         break;
     }
   }
@@ -1255,10 +1870,10 @@ class GBA {
     addr >>>= 0;
     val &= 0xFFFF;
     const region = addr >>> 24;
+    if (region < 16) this.memCycles += this.ws16N[region];
     if (region === 0x0E || region === 0x0F) {
       const b = (val >>> ((addr & 1) << 3)) & 0xFF;
-      this.sram[addr & 0x7FFF] = b;
-      this.sramDirty = true;
+      this.writeSave8(addr, b);
       return;
     }
     addr = (addr & ~1) >>> 0;
@@ -1282,18 +1897,12 @@ class GBA {
         this.oam16[(addr & 0x3FE) >>> 1] = val;
         break;
       case 0x08: {
-        // Tier 3: GPIO / RTC registers at 0x080000C4..0x080000C8
         const off = addr & 0x1FFFFFE;
         if (off >= 0xC4 && off <= 0xC8) {
           this.writeGpio(off, val);
         }
         break;
       }
-      case 0x0E: case 0x0F:
-        // 16-bit write to SRAM writes the byte sitting on the selected byte lane
-        this.sram[addr & 0x7FFF] = val & 0xFF;
-        this.sramDirty = true;
-        break;
     }
   }
 
@@ -1301,10 +1910,10 @@ class GBA {
     addr >>>= 0;
     val >>>= 0;
     const region = addr >>> 24;
+    if (region < 16) this.memCycles += this.ws32N[region];
     if (region === 0x0E || region === 0x0F) {
       const b = (val >>> ((addr & 3) << 3)) & 0xFF;
-      this.sram[addr & 0x7FFF] = b;
-      this.sramDirty = true;
+      this.writeSave8(addr, b);
       return;
     }
     addr = (addr & ~3) >>> 0;
@@ -1327,10 +1936,6 @@ class GBA {
       case 0x07:
         this.oam32[(addr & 0x3FC) >>> 2] = val;
         break;
-      case 0x0E: case 0x0F:
-        this.sram[addr & 0x7FFF] = val & 0xFF;
-        this.sramDirty = true;
-        break;
     }
   }
 
@@ -1341,7 +1946,6 @@ class GBA {
     } else if (off === 0xC8) {
       this.gpioCnt = val & 1;
     } else if (off === 0xC4) {
-      // Pin 0 = SCK, Pin 1 = SIO, Pin 2 = CS
       const prevSck = this.gpioData & 1;
       const prevCs  = (this.gpioData >> 2) & 1;
       this.gpioData = (this.gpioData & ~this.gpioDir) | (val & this.gpioDir);
@@ -1355,18 +1959,16 @@ class GBA {
         return;
       }
       if (!prevCs && cs) {
-        this.rtcState = 1; // Command byte
+        this.rtcState = 1;
         this.rtcBitIdx = 0;
         this.rtcShift = 0;
       }
-      // Rising edge of SCK
       if (!prevSck && sck) {
         if (this.rtcState === 1) {
           this.rtcShift |= (sio << this.rtcBitIdx);
           this.rtcBitIdx++;
           if (this.rtcBitIdx === 8) {
             let cmd = this.rtcShift;
-            // If magic nibble 0110 is in low bits (MSB-first), reverse bits
             if ((cmd & 0x0F) === 0x06) {
               let rev = 0;
               for (let i = 0; i < 8; i++) if (cmd & (1 << i)) rev |= (1 << (7 - i));
@@ -1380,7 +1982,6 @@ class GBA {
             this.prepareRtcData();
           }
         } else if (this.rtcState === 3) {
-          // Output bit on SIO
           const b = this.rtcReadBuf[this.rtcByteIdx] || 0;
           const bit = (b >> this.rtcBitIdx) & 1;
           this.gpioData = (this.gpioData & ~2) | (bit << 1);
@@ -1399,10 +2000,8 @@ class GBA {
     const now = new Date();
     this.rtcReadBuf.fill(0);
     if (this.rtcCmd === 1) {
-      // Status register
       this.rtcReadBuf[0] = this.rtcStatus;
     } else if (this.rtcCmd === 2) {
-      // Date & Time (7 bytes: YY, MM, DD, DayOfWeek, HH, MM, SS)
       this.rtcReadBuf[0] = toBcd(now.getFullYear() - 2000);
       this.rtcReadBuf[1] = toBcd(now.getMonth() + 1);
       this.rtcReadBuf[2] = toBcd(now.getDate());
@@ -1411,7 +2010,6 @@ class GBA {
       this.rtcReadBuf[5] = toBcd(now.getMinutes());
       this.rtcReadBuf[6] = toBcd(now.getSeconds());
     } else if (this.rtcCmd === 3) {
-      // Time only (3 bytes: HH, MM, SS)
       this.rtcReadBuf[0] = toBcd(now.getHours());
       this.rtcReadBuf[1] = toBcd(now.getMinutes());
       this.rtcReadBuf[2] = toBcd(now.getSeconds());
@@ -1427,6 +2025,11 @@ class GBA {
       if ((off & 0xFFFF) === 0x800) return this.io[0x208];
       return (this.readOpenBus32(off) >>> ((off & 3) << 3)) & 0xFF;
     }
+    if (off >= 0x090 && off <= 0x09F) {
+      // Wave RAM CPU read accesses the non-playing bank ((bank ^ 1) * 16)
+      const bank = ((this.io16[0x070 >> 1] >>> 6) & 1) ^ 1;
+      return this.waveRam[(bank << 4) | (off & 0xF)];
+    }
     const h = this.readIo16(off & ~1);
     return (off & 1) ? (h >>> 8) : (h & 0xFF);
   }
@@ -1435,9 +2038,21 @@ class GBA {
     if (off >= 0x400) {
       return 0;
     }
+    if (off >= 0x090 && off <= 0x09E) {
+      const bank = ((this.io16[0x070 >> 1] >>> 6) & 1) ^ 1;
+      const base = (bank << 4) | (off & 0xE);
+      return this.waveRam[base] | (this.waveRam[base + 1] << 8);
+    }
     switch (off) {
       case 0x006: // VCOUNT
         return this.vcount;
+      case 0x084: { // SOUNDCNT_X (bits 0..3 = active PSG channels, bit 7 = master enable)
+        let status = this.io16[0x084 >> 1] & 0x0080;
+        if (status) {
+          for (let c = 0; c < 4; c++) if (this.psgEnabled[c]) status |= (1 << c);
+        }
+        return status;
+      }
       case 0x100: return this.timerVal[0];
       case 0x102: return this.timerCnt[0];
       case 0x104: return this.timerVal[1];
@@ -1452,6 +2067,8 @@ class GBA {
         return this.io16[0x200 >> 1];
       case 0x202: // IF
         return this.io16[0x202 >> 1];
+      case 0x204: // WAITCNT (bit 15 Game Pak type is always 0)
+        return this.io16[0x204 >> 1] & 0x7FFF;
       case 0x208: // IME
         return this.io16[0x208 >> 1] & 1;
       default:
@@ -1461,13 +2078,17 @@ class GBA {
 
   writeIo8(off, val) {
     if (off === 0x301) {
-      // HALTCNT: bit 7 = 0 -> HALT, bit 7 = 1 -> STOP
       this.halted = true;
       return;
     }
     if (off >= 0x400) return;
+    if (off >= 0x090 && off <= 0x09F) {
+      const bank = ((this.io16[0x070 >> 1] >>> 6) & 1) ^ 1;
+      this.waveRam[(bank << 4) | (off & 0xF)] = val & 0xFF;
+      this.io[off] = val & 0xFF;
+      return;
+    }
     if (off === 0x202 || off === 0x203) {
-      // Writing 1s to IF acknowledges (clears) those bits!
       const shift = (off & 1) << 3;
       this.io16[0x202 >> 1] &= ~(val << shift);
       return;
@@ -1479,7 +2100,6 @@ class GBA {
 
   writeIo32(off, val) {
     if (off === 0x0A0) {
-      // FIFO_A 32-bit write pushes 4 signed 8-bit samples
       this.pushFifoA(val & 0xFF);
       this.pushFifoA((val >>> 8) & 0xFF);
       this.pushFifoA((val >>> 16) & 0xFF);
@@ -1487,7 +2107,6 @@ class GBA {
       return;
     }
     if (off === 0x0A4) {
-      // FIFO_B 32-bit write pushes 4 signed 8-bit samples
       this.pushFifoB(val & 0xFF);
       this.pushFifoB((val >>> 8) & 0xFF);
       this.pushFifoB((val >>> 16) & 0xFF);
@@ -1500,6 +2119,14 @@ class GBA {
 
   writeIo16(off, val) {
     if (off >= 0x400) return;
+    if (off >= 0x090 && off <= 0x09E) {
+      const bank = ((this.io16[0x070 >> 1] >>> 6) & 1) ^ 1;
+      const base = (bank << 4) | (off & 0xE);
+      this.waveRam[base]     = val & 0xFF;
+      this.waveRam[base + 1] = (val >>> 8) & 0xFF;
+      this.io16[off >>> 1]   = val;
+      return;
+    }
     switch (off) {
       case 0x004: // DISPSTAT (bits 0..2 are read-only status flags!)
         this.io16[0x004 >> 1] = (this.io16[0x004 >> 1] & 0x0007) | (val & 0xFFF8);
@@ -1507,11 +2134,11 @@ class GBA {
       case 0x006: // VCOUNT is read-only
         return;
 
-      // BG2 / BG3 Reference Point Latches (0x28, 0x2A, 0x2C, 0x2E, 0x38, 0x3A, 0x3C, 0x3E)
+      // BG2 / BG3 Reference Point Latches
       case 0x028: case 0x02A: {
         this.io16[off >>> 1] = val;
         const raw = this.io32[0x028 >> 2];
-        this.bgRefX[0] = (raw << 4) >> 4; // Sign-extend 28-bit
+        this.bgRefX[0] = (raw << 4) >> 4;
         return;
       }
       case 0x02C: case 0x02E: {
@@ -1532,6 +2159,80 @@ class GBA {
         this.bgRefY[1] = (raw << 4) >> 4;
         return;
       }
+
+      // PSG Channel 1..4 Control & Trigger Registers
+      case 0x062: // SOUND1CNT_H
+        this.io16[0x062 >> 1] = val;
+        this.psgLen[0] = 64 - (val & 0x3F);
+        this.psgVol[0] = (val >>> 12) & 0xF;
+        return;
+      case 0x064: // SOUND1CNT_X
+        this.io16[0x064 >> 1] = val;
+        this.psgFreq[0] = val & 0x7FF;
+        if (val & 0x8000) {
+          this.psgEnabled[0] = 1;
+          const cntH = this.io16[0x062 >> 1];
+          if (this.psgLen[0] === 0) this.psgLen[0] = 64 - (cntH & 0x3F);
+          this.psgVol[0] = (cntH >>> 12) & 0xF;
+          this.psgEnvTimer[0] = (cntH >>> 8) & 7;
+          this.psgSweepTimer = (this.io16[0x060 >> 1] >>> 4) & 7;
+        }
+        return;
+      case 0x068: // SOUND2CNT_L
+        this.io16[0x068 >> 1] = val;
+        this.psgLen[1] = 64 - (val & 0x3F);
+        this.psgVol[1] = (val >>> 12) & 0xF;
+        return;
+      case 0x06C: // SOUND2CNT_H
+        this.io16[0x06C >> 1] = val;
+        this.psgFreq[1] = val & 0x7FF;
+        if (val & 0x8000) {
+          this.psgEnabled[1] = 1;
+          const cntL = this.io16[0x068 >> 1];
+          if (this.psgLen[1] === 0) this.psgLen[1] = 64 - (cntL & 0x3F);
+          this.psgVol[1] = (cntL >>> 12) & 0xF;
+          this.psgEnvTimer[1] = (cntL >>> 8) & 7;
+        }
+        return;
+      case 0x070: // SOUND3CNT_L
+        this.io16[0x070 >> 1] = val;
+        if (!(val & 0x0080)) this.psgEnabled[2] = 0;
+        return;
+      case 0x072: // SOUND3CNT_H
+        this.io16[0x072 >> 1] = val;
+        this.psgLen[2] = 256 - (val & 0xFF);
+        return;
+      case 0x074: // SOUND3CNT_X
+        this.io16[0x074 >> 1] = val;
+        this.psgFreq[2] = val & 0x7FF;
+        if (val & 0x8000) {
+          this.psgEnabled[2] = (this.io16[0x070 >> 1] & 0x0080) ? 1 : 0;
+          if (this.psgLen[2] === 0) this.psgLen[2] = 256 - (this.io16[0x072 >> 1] & 0xFF);
+          this.psgPhase[2] = 0;
+        }
+        return;
+      case 0x078: // SOUND4CNT_L
+        this.io16[0x078 >> 1] = val;
+        this.psgLen[3] = 64 - (val & 0x3F);
+        this.psgVol[3] = (val >>> 12) & 0xF;
+        return;
+      case 0x07C: // SOUND4CNT_H
+        this.io16[0x07C >> 1] = val;
+        if (val & 0x8000) {
+          this.psgEnabled[3] = 1;
+          const cntL = this.io16[0x078 >> 1];
+          if (this.psgLen[3] === 0) this.psgLen[3] = 64 - (cntL & 0x3F);
+          this.psgVol[3] = (cntL >>> 12) & 0xF;
+          this.psgEnvTimer[3] = (cntL >>> 8) & 7;
+          this.psgLfsr = (val & 0x0008) ? 0x007F : 0x7FFF;
+        }
+        return;
+      case 0x084: // SOUNDCNT_X
+        this.io16[0x084 >> 1] = val & 0x0080;
+        if (!(val & 0x0080)) {
+          this.psgEnabled.fill(0);
+        }
+        return;
 
       // Direct Sound FIFOs (16-bit write)
       case 0x0A0: case 0x0A2:
@@ -1580,15 +2281,13 @@ class GBA {
       case 0x128: {
         this.io16[0x128 >> 1] = val;
         if (val & 0x0080) {
-          // Transfer start! Broadcast over BroadcastChannel if available
-          const outData = this.io16[0x12A >> 1]; // SIOMLT_SEND / SIODATA8
-          this.io16[0x120 >> 1] = outData; // SIOMULTI0
+          const outData = this.io16[0x12A >> 1];
+          this.io16[0x120 >> 1] = outData;
           if (this.linkChannel) {
             try {
               this.linkChannel.postMessage({ type: 'SIO_XFER', sender: this.linkId, data: outData });
             } catch (e) {}
           }
-          // If no peer responds immediately, complete transfer cleanly
           this.io16[0x128 >> 1] = val & ~0x0080;
           if (val & 0x4000) this.requestIrq(IRQ_SIO);
         }
@@ -1608,6 +2307,10 @@ class GBA {
         return;
       case 0x202: // IF (write 1 to clear!)
         this.io16[0x202 >> 1] &= ~val;
+        return;
+      case 0x204: // WAITCNT
+        this.io16[0x204 >> 1] = val & 0x7FFF;
+        this.updateWaitstates(val & 0x7FFF);
         return;
       case 0x208: // IME
         this.io16[0x208 >> 1] = val & 1;
@@ -1679,7 +2382,6 @@ class GBA {
     const prev = this.timerCnt[ch];
     this.timerCnt[ch] = val;
     this.io16[(0x102 + ch * 4) >> 1] = val;
-    // Rising edge of Enable bit (bit 7): reload counter from reload latch
     if (!(prev & 0x0080) && (val & 0x0080)) {
       this.timerVal[ch] = this.timerReload[ch];
       this.timerSub[ch] = 0;
@@ -1687,11 +2389,10 @@ class GBA {
   }
 
   stepTimers(cycles) {
-    const shifts = [0, 6, 8, 10]; // Prescaler shifts: 1, 64, 256, 1024
+    const shifts = [0, 6, 8, 10];
     for (let ch = 0; ch < 4; ch++) {
       const cnt = this.timerCnt[ch];
       if (!(cnt & 0x0080)) continue;
-      // Count-up (cascade) timers are stepped by the preceding timer's overflow
       if (ch > 0 && (cnt & 0x0004)) continue;
 
       this.timerSub[ch] += cycles;
@@ -1725,7 +2426,6 @@ class GBA {
       if (cnt & 0x0040) {
         this.requestIrq(IRQ_TIMER0 << ch);
       }
-      // Check Direct Sound FIFO timer triggers (Timer 0 or Timer 1)
       if (ch === 0 || ch === 1) {
         const sndCntH = this.io16[0x082 >> 1];
         const timerA = (sndCntH >>> 10) & 1;
@@ -1733,7 +2433,6 @@ class GBA {
         if (timerA === ch) this.popFifoA();
         if (timerB === ch) this.popFifoB();
       }
-      // Cascade into next timer if Count-Up (bit 2) and Enable (bit 7) are set
       if (ch < 3) {
         const nextCnt = this.timerCnt[ch + 1];
         if ((nextCnt & 0x0084) === 0x0084) {
@@ -1761,7 +2460,6 @@ class GBA {
 
       const timing = (val >>> 12) & 3;
       if (timing === 0) {
-        // Immediate DMA
         this.executeDma(ch, false);
       }
     }
@@ -1790,6 +2488,42 @@ class GBA {
     let src = this.dmaSrc[ch] >>> 0;
     let dst = this.dmaDst[ch] >>> 0;
 
+    const savedMemCycles = this.memCycles;
+    const srcReg = (src >>> 24) & 0xF;
+    const dstReg = (dst >>> 24) & 0xF;
+
+    // Check DMA3 EEPROM serial transfer at 0x0D000000..0x0DFFFFFF
+    if (ch === 3 && !isSoundFifo && !is32) {
+      if (dstReg === 0x0D && (this.saveType === 'EEPROM' || this.saveType === 'AUTO')) {
+        this.handleEepromDmaWrite(src & ~1, srcDelta, count);
+        src = (src + srcDelta * count) >>> 0;
+        dst = (dst + dstDelta * count) >>> 0;
+        this.dmaSrc[ch] = src;
+        this.dmaDst[ch] = dst;
+        const unitS = this.ws16S[srcReg] + this.ws16S[dstReg];
+        this.dmaCyclesStall += 2 + count * unitS;
+        if (cnt & 0x4000) this.requestIrq(IRQ_DMA0 << ch);
+        this.dmaCnt[ch] &= ~0x8000;
+        this.io16[(0x0B0 + ch * 12 + 10) >> 1] = this.dmaCnt[ch];
+        this.memCycles = savedMemCycles;
+        return;
+      }
+      if (srcReg === 0x0D && (this.saveType === 'EEPROM' || this.eepromUsed || ((src & 0x1FFFFFE) >= this.rom.length && count === 68))) {
+        this.handleEepromDmaRead(dst & ~1, dstDelta, count);
+        src = (src + srcDelta * count) >>> 0;
+        dst = (dst + dstDelta * count) >>> 0;
+        this.dmaSrc[ch] = src;
+        this.dmaDst[ch] = dst;
+        const unitS = this.ws16S[srcReg] + this.ws16S[dstReg];
+        this.dmaCyclesStall += 2 + count * unitS;
+        if (cnt & 0x4000) this.requestIrq(IRQ_DMA0 << ch);
+        this.dmaCnt[ch] &= ~0x8000;
+        this.io16[(0x0B0 + ch * 12 + 10) >> 1] = this.dmaCnt[ch];
+        this.memCycles = savedMemCycles;
+        return;
+      }
+    }
+
     if (is32) {
       src &= ~3;
       dst &= ~3;
@@ -1799,6 +2533,9 @@ class GBA {
         src = (src + srcDelta) >>> 0;
         dst = (dst + dstDelta) >>> 0;
       }
+      const firstCost = this.ws32N[srcReg] + this.ws32N[dstReg];
+      const seqCost   = this.ws32S[srcReg] + this.ws32S[dstReg];
+      this.dmaCyclesStall += 2 + firstCost + (count > 1 ? (count - 1) * seqCost : 0);
     } else {
       src &= ~1;
       dst &= ~1;
@@ -1808,7 +2545,11 @@ class GBA {
         src = (src + srcDelta) >>> 0;
         dst = (dst + dstDelta) >>> 0;
       }
+      const firstCost = this.ws16N[srcReg] + this.ws16N[dstReg];
+      const seqCost   = this.ws16S[srcReg] + this.ws16S[dstReg];
+      this.dmaCyclesStall += 2 + firstCost + (count > 1 ? (count - 1) * seqCost : 0);
     }
+    this.memCycles = savedMemCycles;
 
     this.dmaSrc[ch] = src;
     this.dmaDst[ch] = dst;
@@ -1836,7 +2577,6 @@ class GBA {
   }
 
   setKeys(pressedMask) {
-    // pressedMask has 1 for pressed buttons (bit 0=A, 1=B, 2=Select, 3=Start, 4=Right, 5=Left, 6=Up, 7=Down, 8=R, 9=L)
     this.keyMask = (~pressedMask) & 0x03FF;
     this.io16[0x130 >> 1] = this.keyMask;
     this.checkKeypadIrq();
@@ -1848,12 +2588,10 @@ class GBA {
     const targetKeys = keycnt & 0x03FF;
     const pressed = (~this.keyMask) & 0x03FF;
     if (keycnt & 0x8000) {
-      // AND mode: all selected keys pressed
       if ((pressed & targetKeys) === targetKeys && targetKeys !== 0) {
         this.requestIrq(IRQ_KEYPAD);
       }
     } else {
-      // OR mode: any selected key pressed
       if ((pressed & targetKeys) !== 0) {
         this.requestIrq(IRQ_KEYPAD);
       }
@@ -1904,7 +2642,6 @@ class GBA {
     const oldMode = this.cpsr & 0x1F;
     if (oldMode === newMode) return;
 
-    // Save current banked registers
     if (oldMode === MODE_FIQ) {
       for (let i = 0; i < 7; i++) this.bankFiq[i] = this.r[8 + i];
     } else {
@@ -1922,7 +2659,6 @@ class GBA {
       }
     }
 
-    // Restore new mode's banked registers
     if (newMode === MODE_FIQ) {
       for (let i = 0; i < 7; i++) this.r[8 + i] = this.bankFiq[i];
     } else {
@@ -1972,19 +2708,20 @@ class GBA {
 
   triggerIrqException() {
     const savedCpsr = this.cpsr;
-    const isThumb = (savedCpsr & FLAG_T) !== 0;
-    // LR_irq = address of next instruction to execute + 4
     const nextPc = this.r[15] + 4;
     this.switchMode(MODE_IRQ);
     this.spsrIrq = savedCpsr;
     this.r[14] = nextPc;
-    this.cpsr = (this.cpsr & ~FLAG_T) | FLAG_I; // Enter ARM state, disable IRQs
-    this.r[15] = 0x00000018; // Vector to BIOS IRQ stub at 0x18!
+    this.cpsr = (this.cpsr & ~FLAG_T) | FLAG_I;
+    this.r[15] = 0x00000018;
+    this.pipePc = -1;
+    this.prefetchCount = 0;
+    this.prefetchDuty  = 0;
     this.biosLastFetch = 0xE25EF004;
   }
 
   // ==========================================================================
-  // Custom 1337Boy BIOS & SWI Services (All 21 Documented Services)
+  // Custom 1337Boy BIOS & SWI Services (All 21+ Documented Services)
   // ==========================================================================
 
   handleSwi(comment) {
@@ -2001,12 +2738,14 @@ class GBA {
         this.cpsr = MODE_SYS;
         this.r[14] = flag ? 0x02000000 : 0x08000000;
         this.r[15] = this.r[14];
+        this.pipePc = -1;
+        this.biosLastFetch = 0xE129F000;
         break;
       }
       case 0x01: { // RegisterRamReset(flags in R0)
         const flags = this.r[0] & 0xFF;
         if (flags & 0x01) this.ewram.fill(0);
-        if (flags & 0x02) this.iwram.fill(0, 0, 0x7E00); // Preserve 0x7E00..0x7FFF
+        if (flags & 0x02) this.iwram.fill(0, 0, 0x7E00);
         if (flags & 0x04) this.pal.fill(0);
         if (flags & 0x08) this.vram.fill(0);
         if (flags & 0x10) this.oam.fill(0);
@@ -2027,32 +2766,35 @@ class GBA {
       case 0x04: { // IntrWait(R0=clearOld, R1=irqMask)
         const clearOld = this.r[0] & 1;
         const mask = this.r[1] & 0xFFFF;
-        let biosFlags = this.read16(0x03007FF8);
+        let biosFlags = this.iwram16[0x7FF8 >> 1];
         if (clearOld) {
           biosFlags &= ~mask;
-          this.write16(0x03007FF8, biosFlags);
+          this.iwram16[0x7FF8 >> 1] = biosFlags;
         }
-        this.io16[0x208 >> 1] = 1; // Ensure IME=1
+        this.io16[0x208 >> 1] = 1;
         if (!(biosFlags & mask)) {
           this.halted = true;
+          this.inIntrWaitMask = mask;
         } else {
-          this.write16(0x03007FF8, biosFlags & ~mask);
+          this.iwram16[0x7FF8 >> 1] = biosFlags & ~mask;
+          this.inIntrWaitMask = 0;
         }
         this.biosLastFetch = 0xE129F000;
         break;
       }
 
       case 0x05: { // VBlankIntrWait()
-        let biosFlags = this.read16(0x03007FF8);
+        let biosFlags = this.iwram16[0x7FF8 >> 1];
         biosFlags &= ~IRQ_VBLANK;
-        this.write16(0x03007FF8, biosFlags);
+        this.iwram16[0x7FF8 >> 1] = biosFlags;
         this.io16[0x208 >> 1] = 1;
         this.halted = true;
+        this.inIntrWaitMask = IRQ_VBLANK;
         this.biosLastFetch = 0xE129F000;
         break;
       }
 
-      case 0x06: { // Div(R0=num, R1=den) -> R0=num/den, R1=num%den, R3=|num/den|
+      case 0x06: { // Div(R0=num, R1=den)
         const num = this.r[0] | 0;
         const den = this.r[1] | 0;
         if (den === 0) {
@@ -2073,7 +2815,7 @@ class GBA {
         break;
       }
 
-      case 0x07: { // DivArm(R0=den, R1=num) -> R0=num/den, R1=num%den, R3=|num/den|
+      case 0x07: { // DivArm(R0=den, R1=num)
         const den = this.r[0] | 0;
         const num = this.r[1] | 0;
         if (den === 0) {
@@ -2094,7 +2836,7 @@ class GBA {
         break;
       }
 
-      case 0x08: { // Sqrt(R0=uint32) -> R0=integer sqrt (pure integer bit-by-bit)
+      case 0x08: { // Sqrt(R0=uint32)
         let n = this.r[0] >>> 0;
         let res = 0;
         let bit = 0x40000000;
@@ -2112,8 +2854,7 @@ class GBA {
         break;
       }
 
-      case 0x09: { // ArcTan(R0=tan in 1.14 fixed-point) -> R0=angle
-        // Pure integer GBA BIOS polynomial approximation
+      case 0x09: { // ArcTan(R0=tan in 1.14 fixed-point)
         const t = (this.r[0] << 16) >> 16;
         let a = -((Math.imul(t, t) >> 14));
         let r = ((0xA9 * a) >> 14) + 0x390;
@@ -2127,7 +2868,7 @@ class GBA {
         break;
       }
 
-      case 0x0A: { // ArcTan2(R0=x, R1=y) -> R0=angle in 0..0xFFFF
+      case 0x0A: { // ArcTan2(R0=x, R1=y)
         const x = (this.r[0] << 16) >> 16;
         const y = (this.r[1] << 16) >> 16;
         if (y === 0) {
@@ -2194,7 +2935,7 @@ class GBA {
         let src = (this.r[0] & ~3) >>> 0;
         let dst = (this.r[1] & ~3) >>> 0;
         const ctrl = this.r[2] >>> 0;
-        const count = ((ctrl & 0x1FFFFF) + 7) & ~7; // Rounded up to multiple of 8 words
+        const count = ((ctrl & 0x1FFFFF) + 7) & ~7;
         const fixed = (ctrl & 0x01000000) !== 0;
         const fixedVal = this.read32Aligned(src);
         for (let i = 0; i < count; i++) {
@@ -2206,11 +2947,15 @@ class GBA {
         break;
       }
 
+      case 0x0D: { // GetBiosChecksum() -> R0 = 0xBAAE187F (official GBA BIOS checksum)
+        this.r[0] = 0xBAAE187F | 0;
+        break;
+      }
+
       case 0x0E: { // BgAffineSet(R0=src, R1=dst, R2=count)
         let src = this.r[0] >>> 0;
         let dst = this.r[1] >>> 0;
         const count = this.r[2] >>> 0;
-        // Sin/Cos lookup using 256-entry integer LUT
         for (let i = 0; i < count; i++) {
           const origX = this.read32Aligned(src) | 0;
           const origY = this.read32Aligned(src + 4) | 0;
@@ -2341,7 +3086,7 @@ class GBA {
         break;
       }
 
-      case 0x13: { // HuffUnComp(R0=src, R1=dst)
+      case 0x13: { // HuffUnComp
         let src = (this.r[0] & ~3) >>> 0;
         const dst = (this.r[1] & ~3) >>> 0;
         const header = this.read32Aligned(src);
@@ -2470,8 +3215,7 @@ class GBA {
   }
 
   // ==========================================================================
-  // ARM7TDMI CPU Execution Core (Full ARM + Thumb Instruction Sets)
-  // Zero floating point in the CPU core!
+  // ARM7TDMI CPU Execution Core (Full ARM + Thumb + 2-Stage Pipeline + Waitstates)
   // ==========================================================================
 
   checkCond(cond) {
@@ -2533,7 +3277,6 @@ class GBA {
     if (res < 0) c |= FLAG_N;
     else if (res === 0) c |= FLAG_Z;
     const ua = a >>> 0;
-    const ub = b >>> 0;
     const ures = res >>> 0;
     if (carryIn ? (ures <= ua) : (ures < ua)) c |= FLAG_C;
     if (((~(a ^ b)) & (a ^ res)) < 0) c |= FLAG_V;
@@ -2575,7 +3318,6 @@ class GBA {
         return (val << imm5) | 0;
       case 1: // LSR
         if (imm5 === 0) {
-          // LSR #32
           this.shifterCarry = (val >>> 31) & 1;
           return 0;
         }
@@ -2583,7 +3325,6 @@ class GBA {
         return (val >>> imm5) | 0;
       case 2: // ASR
         if (imm5 === 0) {
-          // ASR #32
           this.shifterCarry = (val >>> 31) & 1;
           return (val >> 31) | 0;
         }
@@ -2591,7 +3332,6 @@ class GBA {
         return (val >> imm5) | 0;
       case 3: // ROR / RRX
         if (imm5 === 0) {
-          // RRX #1
           this.shifterCarry = val & 1;
           return ((carryIn << 31) | (val >>> 1)) | 0;
         }
@@ -2653,8 +3393,56 @@ class GBA {
     return val;
   }
 
+  // Compute instruction fetch + data + internal cycles with WAITCNT and Game Pak Prefetch Buffer
+  finishCycles(pcRegion, isThumb, baseInternal, branched) {
+    let fetchCost = isThumb ? this.ws16S[pcRegion] : this.ws32S[pcRegion];
+    const inRom = (pcRegion >= 8 && pcRegion <= 13);
+
+    if (inRom && this.prefetchEnabled) {
+      if (isThumb) {
+        if (this.prefetchCount > 0) {
+          this.prefetchCount--;
+          fetchCost = 1;
+        }
+      } else {
+        if (this.prefetchCount >= 2) {
+          this.prefetchCount -= 2;
+          fetchCost = 2;
+        } else if (this.prefetchCount === 1) {
+          this.prefetchCount = 0;
+          fetchCost = 1 + this.ws16S[pcRegion];
+        }
+      }
+    }
+
+    const extraInternal = (baseInternal > 1) ? (baseInternal - 1) : 0;
+    const nonFetchCycles = this.memCycles + extraInternal;
+
+    // While CPU is busy with non-ROM cycles, Game Pak Prefetch Buffer prefetches sequential halfwords
+    if (inRom && this.prefetchEnabled && nonFetchCycles > 0 && !branched) {
+      const sWait = this.ws16S[pcRegion];
+      this.prefetchDuty += nonFetchCycles;
+      while (this.prefetchDuty >= sWait && this.prefetchCount < 8) {
+        this.prefetchDuty -= sWait;
+        this.prefetchCount++;
+      }
+    }
+
+    let branchPenalty = 0;
+    if (branched) {
+      const dstReg = (this.r[15] >>> 24) & 0xF;
+      const dstThumb = (this.cpsr & FLAG_T) !== 0;
+      branchPenalty = dstThumb
+        ? (this.ws16N[dstReg] + this.ws16S[dstReg])
+        : (this.ws32N[dstReg] + this.ws32S[dstReg]);
+      this.prefetchCount = 0;
+      this.prefetchDuty  = 0;
+    }
+
+    return fetchCost + nonFetchCycles + branchPenalty;
+  }
+
   stepInstruction() {
-    // Check pending interrupts if IME=1 and CPSR I=0
     if ((this.io16[0x208 >> 1] & 1) && !(this.cpsr & FLAG_I)) {
       if (this.io16[0x200 >> 1] & this.io16[0x202 >> 1]) {
         this.halted = false;
@@ -2674,24 +3462,36 @@ class GBA {
   }
 
   stepArm() {
+    this.memCycles = 0;
     const pc = this.r[15] >>> 0;
-    const instr = this.read32Aligned(pc);
-    this.lastFetchedOpcode = instr;
-    this.r[15] = (pc + 4) | 0; // Advance PC by +4 before decode; reading R15 adds +4 (total pc+8)
+    const pcRegion = (pc >>> 24) & 0xF;
+
+    // 2-Stage Prefetch Pipeline: if flushed, fill pipe0 (at pc) and pipe1 (at pc+4)
+    if (this.pipePc !== pc) {
+      this.pipe0 = this.fetchArmOpcode(pc);
+      this.pipe1 = this.fetchArmOpcode((pc + 4) >>> 0);
+    }
+    const instr = this.pipe0;
+    const nextPc = (pc + 4) >>> 0;
+    const fetched = this.fetchArmOpcode((pc + 8) >>> 0);
+    this.pipe0 = this.pipe1;
+    this.pipe1 = fetched;
+    this.pipePc = nextPc;
+    this.lastFetchedOpcode = fetched;
+    this.r[15] = nextPc | 0; // Advance PC by +4 before decode; reading R15 adds +4 (total pc+8)
 
     const cond = instr >>> 28;
     if (cond !== 0xE && !this.checkCond(cond)) {
-      return 1;
+      return this.finishCycles(pcRegion, false, 1, false);
     }
 
     const top3 = (instr >>> 25) & 7;
+    let baseCycles = 1;
 
     if (top3 === 0) {
-      // Data Processing (Reg), Multiply, SWP, Halfword/Signed Transfer, BX, MRS/MSR
       const bit4 = (instr >>> 4) & 1;
       const bit7 = (instr >>> 7) & 1;
 
-      // Check BX / Misc in 0x012FFF10 space (opcode 8..B with S=0)
       if ((instr & 0x0FFFFFF0) === 0x012FFF10) {
         // BX Rm
         const rmVal = this.getReg(instr & 0xF, 4);
@@ -2702,16 +3502,15 @@ class GBA {
           this.cpsr &= ~FLAG_T;
           this.r[15] = (rmVal & ~3) | 0;
         }
-        return 3;
+        this.pipePc = -1;
+        return this.finishCycles(pcRegion, false, 1, true);
       }
 
-      // Check Multiply / SWP / Halfword Transfer (bit4=1 and bit7=1)
       if (bit4 === 1 && bit7 === 1) {
         const sh = (instr >>> 5) & 3;
         if (sh === 0) {
-          // Multiply, Multiply Long, or Single Data Swap (SWP/SWPB)
           if (((instr >>> 24) & 1) === 1) {
-            // SWP / SWPB: bits 27..23 = 00010, bit22=B
+            // SWP / SWPB
             const isByte = (instr & (1 << 22)) !== 0;
             const rn = (instr >>> 16) & 0xF;
             const rd = (instr >>> 12) & 0xF;
@@ -2723,11 +3522,12 @@ class GBA {
               this.write8(addr, rmVal & 0xFF);
               this.r[rd] = tmp;
             } else {
-              const tmp = this.read32(addr); // Misaligned SWP rotates read like LDR
+              const tmp = this.read32(addr);
               this.write32(addr, rmVal);
               this.r[rd] = tmp | 0;
             }
-            return 4;
+            if (rd === 15) this.pipePc = -1;
+            return this.finishCycles(pcRegion, false, 2, this.pipePc === -1);
           } else if (((instr >>> 23) & 1) === 1) {
             // Multiply Long: UMULL, UMLAL, SMULL, SMLAL
             const isSigned = (instr & (1 << 22)) !== 0;
@@ -2764,7 +3564,7 @@ class GBA {
               else if (hi === 0 && lo === 0) c |= FLAG_Z;
               this.cpsr = c;
             }
-            return 4;
+            return this.finishCycles(pcRegion, false, accum ? 4 : 3, false);
           } else {
             // MUL / MLA
             const accum    = (instr & (1 << 21)) !== 0;
@@ -2773,11 +3573,15 @@ class GBA {
             const rn = (instr >>> 12) & 0xF;
             const rs = (instr >>> 8) & 0xF;
             const rm = instr & 0xF;
-            let res = Math.imul(this.getReg(rm, 4), this.getReg(rs, 4));
+            const vs = this.getReg(rs, 4);
+            let res = Math.imul(this.getReg(rm, 4), vs);
             if (accum) res = (res + this.getReg(rn, 4)) | 0;
             this.r[rd] = res;
             if (setFlags) this.setNZ(res);
-            return 3;
+            // ARM7TDMIbooth multiplier internal cycles (1..4 + 1 if MLA)
+            const s = (vs < 0) ? ~vs : vs;
+            const mCycles = (s & 0xFFFFFF00) === 0 ? 1 : ((s & 0xFFFF0000) === 0 ? 2 : ((s & 0xFF000000) === 0 ? 3 : 4));
+            return this.finishCycles(pcRegion, false, 1 + mCycles + (accum ? 1 : 0), false);
           }
         } else {
           // Halfword and Signed Data Transfer (STRH, LDRH, LDRSB, LDRSH)
@@ -2796,74 +3600,63 @@ class GBA {
 
           if (l) {
             let val = 0;
-            if (sh === 1) {
-              // LDRH (rotated if misaligned!)
-              val = this.read16Rotated(addr);
-            } else if (sh === 2) {
-              // LDRSB (sign-extended byte)
-              val = (this.read8(addr) << 24) >> 24;
-            } else {
-              // LDRSH (sign-extended halfword; if misaligned, sign-extends byte at addr!)
-              val = this.readSigned16(addr);
-            }
+            if (sh === 1) val = this.read16Rotated(addr);
+            else if (sh === 2) val = (this.read8(addr) << 24) >> 24;
+            else val = this.readSigned16(addr);
             if (!p || w) {
               if (rn !== rd) this.r[rn] = modAddr | 0;
             }
             this.r[rd] = val | 0;
-            if (rd === 15) this.r[15] &= ~3;
-            return 3;
+            if (rd === 15) {
+              this.r[15] &= ~3;
+              this.pipePc = -1;
+            }
+            return this.finishCycles(pcRegion, false, 2, this.pipePc === -1);
           } else {
-            // STRH (sh === 1)
-            const storeVal = this.getReg(rd, 8) & 0xFFFF; // STR R15 stores PC+12 (which is this.r[15]+8)
+            const storeVal = this.getReg(rd, 8) & 0xFFFF;
             this.write16(addr, storeVal);
             if (!p || w) {
               this.r[rn] = modAddr | 0;
             }
-            return 2;
+            return this.finishCycles(pcRegion, false, 1, false);
           }
         }
       }
 
-      // Check MRS / MSR (opcode 8..B with S=0)
       if ((instr & 0x01900000) === 0x01000000) {
         const isMsr = (instr & (1 << 21)) !== 0;
         const useSpsr = (instr & (1 << 22)) !== 0;
         if (!isMsr) {
-          // MRS Rd, CPSR/SPSR
           const rd = (instr >>> 12) & 0xF;
           this.r[rd] = useSpsr ? this.getSpsr() : this.cpsr;
         } else {
-          // MSR CPSR/SPSR_<fields>, Rm
           const rmVal = this.getReg(instr & 0xF, 4);
           this.execMsr(instr, rmVal, useSpsr);
         }
-        return 1;
+        return this.finishCycles(pcRegion, false, 1, this.pipePc === -1);
       }
 
-      // Otherwise, Data Processing (Register shift)
-      return this.execDataProc(instr, false);
+      baseCycles = this.execDataProc(instr, false);
+      return this.finishCycles(pcRegion, false, baseCycles, this.pipePc === -1);
     }
 
     if (top3 === 1) {
-      // Data Processing (Immediate) or MSR Immediate
       if ((instr & 0x01900000) === 0x01000000) {
-        // MSR Immediate
         const useSpsr = (instr & (1 << 22)) !== 0;
         const imm8 = instr & 0xFF;
         const rot = ((instr >>> 8) & 0xF) << 1;
         const val = rot ? ((imm8 >>> rot) | (imm8 << (32 - rot))) : imm8;
         this.execMsr(instr, val, useSpsr);
-        return 1;
+        return this.finishCycles(pcRegion, false, 1, this.pipePc === -1);
       }
-      return this.execDataProc(instr, true);
+      baseCycles = this.execDataProc(instr, true);
+      return this.finishCycles(pcRegion, false, baseCycles, this.pipePc === -1);
     }
 
     if (top3 === 2 || top3 === 3) {
-      // Single Data Transfer (LDR / STR / LDRB / STRB)
       const isRegOff = (top3 === 3);
       if (isRegOff && (instr & 0x10)) {
-        // Undefined instruction space
-        return 1;
+        return this.finishCycles(pcRegion, false, 1, false);
       }
       const p = (instr >>> 24) & 1;
       const u = (instr >>> 23) & 1;
@@ -2896,10 +3689,11 @@ class GBA {
         this.r[rd] = val | 0;
         if (rd === 15) {
           this.r[15] &= ~3;
+          this.pipePc = -1;
         }
-        return 3;
+        return this.finishCycles(pcRegion, false, 2, this.pipePc === -1);
       } else {
-        const storeVal = this.getReg(rd, 8); // PC+12 when storing R15
+        const storeVal = this.getReg(rd, 8);
         if (b) {
           this.write8(addr, storeVal & 0xFF);
         } else {
@@ -2908,43 +3702,41 @@ class GBA {
         if (!p || w) {
           this.r[rn] = modAddr | 0;
         }
-        return 2;
+        return this.finishCycles(pcRegion, false, 1, false);
       }
     }
 
     if (top3 === 4) {
-      // Block Data Transfer (LDM / STM)
-      return this.execBlockTransfer(instr);
+      baseCycles = this.execBlockTransfer(instr);
+      return this.finishCycles(pcRegion, false, baseCycles, this.pipePc === -1);
     }
 
     if (top3 === 5) {
-      // Branch / Branch with Link (B / BL)
       const link = (instr >>> 24) & 1;
-      const offset = ((instr << 8) >> 6); // Sign-extended 24-bit * 4
+      const offset = ((instr << 8) >> 6);
       if (link) {
-        this.r[14] = this.r[15] | 0; // Next instruction address (pc+4)
+        this.r[14] = this.r[15] | 0;
       }
       this.r[15] = ((pc + 8 + offset) & ~3) | 0;
-      return 3;
+      this.pipePc = -1;
+      return this.finishCycles(pcRegion, false, 1, true);
     }
 
     if (top3 === 7 && (instr & (1 << 24))) {
-      // Software Interrupt (SWI)
       const comment = (instr >>> 16) & 0xFF;
       this.handleSwi(comment);
-      return 3;
+      return this.finishCycles(pcRegion, false, 3, this.pipePc === -1);
     }
 
-    return 1;
+    return this.finishCycles(pcRegion, false, 1, false);
   }
 
   execMsr(instr, val, useSpsr) {
     let mask = 0;
-    if (instr & (1 << 19)) mask |= 0xFF000000; // Flags (f)
-    if (instr & (1 << 18)) mask |= 0x00FF0000; // Status (s)
-    if (instr & (1 << 17)) mask |= 0x0000FF00; // Extension (x)
+    if (instr & (1 << 19)) mask |= 0xFF000000;
+    if (instr & (1 << 18)) mask |= 0x00FF0000;
+    if (instr & (1 << 17)) mask |= 0x0000FF00;
     if (instr & (1 << 16)) {
-      // Control (c) - only modifiable in privileged modes for CPSR
       if (useSpsr || (this.cpsr & 0x1F) !== MODE_USR) {
         mask |= 0x000000FF;
       }
@@ -2952,11 +3744,13 @@ class GBA {
     if (useSpsr) {
       this.setSpsr((this.getSpsr() & ~mask) | (val & mask));
     } else {
+      const oldT = this.cpsr & FLAG_T;
       const nextCpsr = (this.cpsr & ~mask) | (val & mask);
       if ((mask & 0x1F) && ((nextCpsr & 0x1F) !== (this.cpsr & 0x1F))) {
         this.switchMode(nextCpsr & 0x1F);
       }
       this.cpsr = nextCpsr;
+      if ((nextCpsr & FLAG_T) !== oldT) this.pipePc = -1;
       this.checkIrq();
     }
   }
@@ -2968,8 +3762,9 @@ class GBA {
     const rd = (instr >>> 12) & 0xF;
     const carryIn = (this.cpsr & FLAG_C) ? 1 : 0;
 
-    let pcOffset = 4; // Since this.r[15] is already pc+4, +4 gives pc+8
+    let pcOffset = 4;
     let op2 = 0;
+    let baseCycles = 1;
 
     if (isImm) {
       const imm8 = instr & 0xFF;
@@ -2986,8 +3781,8 @@ class GBA {
       const shiftType = (instr >>> 5) & 3;
       const isRegShift = (instr & 0x10) !== 0;
       if (isRegShift) {
-        // Register-specified shift takes an extra cycle, so R15 reads as PC+12!
         pcOffset = 8;
+        baseCycles = 2; // Register-specified shift adds 1I cycle
         const rs = (instr >>> 8) & 0xF;
         const shiftAmt = this.getReg(rs, 4) & 0xFF;
         const rmVal = this.getReg(rm, 8);
@@ -3004,82 +3799,91 @@ class GBA {
     let writeRd = true;
 
     switch (op) {
-      case 0x0: // AND
+      case 0x0:
         res = op1 & op2;
         if (s && rd !== 15) this.setNZC(res, this.shifterCarry);
         break;
-      case 0x1: // EOR
+      case 0x1:
         res = op1 ^ op2;
         if (s && rd !== 15) this.setNZC(res, this.shifterCarry);
         break;
-      case 0x2: // SUB
+      case 0x2:
         res = (op1 - op2) | 0;
         if (s && rd !== 15) this.subFlags(op1, op2, res);
         break;
-      case 0x3: // RSB
+      case 0x3:
         res = (op2 - op1) | 0;
         if (s && rd !== 15) this.subFlags(op2, op1, res);
         break;
-      case 0x4: // ADD
+      case 0x4:
         res = (op1 + op2) | 0;
         if (s && rd !== 15) this.addFlags(op1, op2, res);
         break;
-      case 0x5: // ADC
+      case 0x5:
         res = (op1 + op2 + carryIn) | 0;
         if (s && rd !== 15) this.adcFlags(op1, op2, carryIn, res);
         break;
-      case 0x6: // SBC
+      case 0x6:
         res = (op1 - op2 - (1 - carryIn)) | 0;
         if (s && rd !== 15) this.sbcFlags(op1, op2, carryIn, res);
         break;
-      case 0x7: // RSC
+      case 0x7:
         res = (op2 - op1 - (1 - carryIn)) | 0;
         if (s && rd !== 15) this.sbcFlags(op2, op1, carryIn, res);
         break;
-      case 0x8: // TST
+      case 0x8:
         res = op1 & op2;
         writeRd = false;
         this.setNZC(res, this.shifterCarry);
         break;
-      case 0x9: // TEQ
+      case 0x9:
         res = op1 ^ op2;
         writeRd = false;
         this.setNZC(res, this.shifterCarry);
         break;
-      case 0xA: // CMP
+      case 0xA:
         res = (op1 - op2) | 0;
         writeRd = false;
         this.subFlags(op1, op2, res);
         break;
-      case 0xB: // CMN
+      case 0xB:
         res = (op1 + op2) | 0;
         writeRd = false;
         this.addFlags(op1, op2, res);
         break;
-      case 0xC: // ORR
+      case 0xC:
         res = op1 | op2;
         if (s && rd !== 15) this.setNZC(res, this.shifterCarry);
         break;
-      case 0xD: // MOV
+      case 0xD:
         res = op2;
         if (s && rd !== 15) this.setNZC(res, this.shifterCarry);
         break;
-      case 0xE: // BIC
+      case 0xE:
         res = op1 & ~op2;
         if (s && rd !== 15) this.setNZC(res, this.shifterCarry);
         break;
-      case 0xF: // MVN
+      case 0xF:
         res = ~op2;
         if (s && rd !== 15) this.setNZC(res, this.shifterCarry);
         break;
     }
 
     if (s && rd === 15) {
-      // S=1 with Rd=15 (or CMP/TST with Rd=15): restore CPSR from SPSR!
       const spsr = this.getSpsr();
       this.switchMode(spsr & 0x1F);
       this.cpsr = spsr;
+      this.pipePc = -1;
       this.checkIrq();
+      // Check if we just returned from BIOS IRQ stub at 0x013C (SUBS PC, LR, #4)
+      if (this.inIntrWaitMask !== 0) {
+        const biosFlags = this.iwram16[0x7FF8 >> 1];
+        if (biosFlags & this.inIntrWaitMask) {
+          this.iwram16[0x7FF8 >> 1] = biosFlags & ~this.inIntrWaitMask;
+          this.inIntrWaitMask = 0;
+          this.biosLastFetch = 0xE129F000;
+        }
+      }
     }
 
     if (writeRd) {
@@ -3090,12 +3894,12 @@ class GBA {
         } else {
           this.r[15] &= ~3;
         }
+        this.pipePc = -1;
       }
     }
-    return 1;
+    return baseCycles;
   }
 
-  // ARM Block Data Transfer (LDM / STM) with all ARM7TDMI edge cases!
   execBlockTransfer(instr) {
     const p = (instr >>> 24) & 1;
     const u = (instr >>> 23) & 1;
@@ -3107,8 +3911,6 @@ class GBA {
 
     const origBase = this.getReg(rn, 4) >>> 0;
 
-    // Edge case 1: Empty register list (rlist == 0) on ARM7TDMI!
-    // Hardware transfers R15 and modifies base by +/- 0x40 (64 bytes)!
     if (rlist === 0) {
       let addr = origBase;
       if (u) {
@@ -3122,13 +3924,14 @@ class GBA {
       }
       if (l) {
         this.r[15] = (this.read32Aligned(addr) & ~3) | 0;
+        this.pipePc = -1;
+        return 2;
       } else {
-        this.write32(addr, (this.r[15] + 8) | 0); // PC+12
+        this.write32(addr, (this.r[15] + 8) | 0);
+        return 1;
       }
-      return 3;
     }
 
-    // Count bits in rlist
     let count = 0;
     for (let i = 0; i < 16; i++) {
       if (rlist & (1 << i)) count++;
@@ -3142,10 +3945,9 @@ class GBA {
 
     const r15InList = (rlist & 0x8000) !== 0;
     const userBankTransfer = s && (!l || !r15InList);
+    const baseReg = (addr >>> 24) & 0xF;
 
     if (l) {
-      // LDM
-      // If Rn is in rlist, writeback is overwritten by the loaded value!
       if (w && !(rlist & (1 << rn))) {
         this.r[rn] = newBase | 0;
       }
@@ -3160,6 +3962,9 @@ class GBA {
           }
         }
       }
+      if (count > 1 && baseReg < 16) {
+        this.memCycles -= (count - 1) * (this.ws32N[baseReg] - this.ws32S[baseReg]);
+      }
       if (r15InList) {
         if (s) {
           const spsr = this.getSpsr();
@@ -3172,13 +3977,10 @@ class GBA {
         } else {
           this.r[15] &= ~3;
         }
+        this.pipePc = -1;
       }
-      return 2 + count;
+      return 2;
     } else {
-      // STM
-      // Edge case 2: Base register Rn in rlist with W=1 on ARM7TDMI:
-      // If Rn is the FIRST (lowest-numbered) register in rlist, store OLD base.
-      // Otherwise, store NEW (written-back) base!
       const lowestBit = rlist & -rlist;
       const rnIsFirst = (lowestBit === (1 << rn));
 
@@ -3186,7 +3988,7 @@ class GBA {
         if (rlist & (1 << i)) {
           let val = 0;
           if (i === 15) {
-            val = (this.r[15] + 8) | 0; // PC+12
+            val = (this.r[15] + 8) | 0;
           } else if (i === rn && w && !rnIsFirst) {
             val = newBase | 0;
           } else if (userBankTransfer) {
@@ -3198,22 +4000,38 @@ class GBA {
           addr = (addr + 4) >>> 0;
         }
       }
+      if (count > 1 && baseReg < 16) {
+        this.memCycles -= (count - 1) * (this.ws32N[baseReg] - this.ws32S[baseReg]);
+      }
       if (w) {
         this.r[rn] = newBase | 0;
       }
-      return 1 + count;
+      return 1;
     }
   }
 
   // ==========================================================================
-  // ARM7TDMI Thumb Instruction Set (All 19 Thumb Formats)
+  // ARM7TDMI Thumb Instruction Set (All 19 Thumb Formats + 2-Stage Pipeline)
   // ==========================================================================
 
   stepThumb() {
+    this.memCycles = 0;
     const pc = this.r[15] >>> 0;
-    const instr = this.read16(pc);
-    this.lastFetchedOpcode = (instr | (instr << 16)) >>> 0;
-    this.r[15] = (pc + 2) | 0; // Advance PC by +2 before decode; reading R15 adds +2 (total pc+4)
+    const pcRegion = (pc >>> 24) & 0xF;
+
+    // 2-Stage Prefetch Pipeline: if flushed, fill pipe0 (at pc) and pipe1 (at pc+2)
+    if (this.pipePc !== pc) {
+      this.pipe0 = this.fetchThumbOpcode(pc);
+      this.pipe1 = this.fetchThumbOpcode((pc + 2) >>> 0);
+    }
+    const instr = this.pipe0;
+    const nextPc = (pc + 2) >>> 0;
+    const fetched = this.fetchThumbOpcode((pc + 4) >>> 0);
+    this.pipe0 = this.pipe1;
+    this.pipe1 = fetched;
+    this.pipePc = nextPc;
+    this.lastFetchedOpcode = (fetched | (fetched << 16)) >>> 0;
+    this.r[15] = nextPc | 0; // Advance PC by +2 before decode; reading R15 adds +2 (total pc+4)
 
     const top3 = (instr >>> 13) & 7;
 
@@ -3228,9 +4046,9 @@ class GBA {
         const res = this.shiftImm(this.r[rs], sub, imm5, carryIn);
         this.r[rd] = res;
         this.setNZC(res, this.shifterCarry);
-        return 1;
+        return this.finishCycles(pcRegion, true, 1, false);
       } else {
-        // Format 2: Add / Subtract (register or 3-bit immediate)
+        // Format 2: Add / Subtract
         const isImm = (instr & 0x0400) !== 0;
         const isSub = (instr & 0x0200) !== 0;
         const rnImm = (instr >>> 6) & 7;
@@ -3247,7 +4065,7 @@ class GBA {
           this.r[rd] = res;
           this.addFlags(op1, op2, res);
         }
-        return 1;
+        return this.finishCycles(pcRegion, true, 1, false);
       }
     }
 
@@ -3257,28 +4075,28 @@ class GBA {
       const rd   = (instr >>> 8) & 7;
       const imm8 = instr & 0xFF;
       const cur  = this.r[rd];
-      if (op === 0) { // MOV Rd, #imm8
+      if (op === 0) {
         this.r[rd] = imm8;
         this.setNZ(imm8);
-      } else if (op === 1) { // CMP Rd, #imm8
+      } else if (op === 1) {
         const res = (cur - imm8) | 0;
         this.subFlags(cur, imm8, res);
-      } else if (op === 2) { // ADD Rd, #imm8
+      } else if (op === 2) {
         const res = (cur + imm8) | 0;
         this.r[rd] = res;
         this.addFlags(cur, imm8, res);
-      } else { // SUB Rd, #imm8
+      } else {
         const res = (cur - imm8) | 0;
         this.r[rd] = res;
         this.subFlags(cur, imm8, res);
       }
-      return 1;
+      return this.finishCycles(pcRegion, true, 1, false);
     }
 
     if (top3 === 2) {
       const subTop = (instr >>> 10) & 7;
       if (subTop === 0) {
-        // Format 4: ALU Operations (16 ops)
+        // Format 4: ALU Operations
         const op = (instr >>> 6) & 0xF;
         const rs = (instr >>> 3) & 7;
         const rd = instr & 7;
@@ -3286,25 +4104,26 @@ class GBA {
         const b  = this.r[rs];
         const carryIn = (this.cpsr & FLAG_C) ? 1 : 0;
         let res = 0;
+        let intCyc = 1;
         switch (op) {
-          case 0x0: res = a & b; this.r[rd] = res; this.setNZ(res); break; // AND
-          case 0x1: res = a ^ b; this.r[rd] = res; this.setNZ(res); break; // EOR
-          case 0x2: res = this.shiftReg(a, 0, b & 0xFF, carryIn); this.r[rd] = res; this.setNZC(res, this.shifterCarry); break; // LSL
-          case 0x3: res = this.shiftReg(a, 1, b & 0xFF, carryIn); this.r[rd] = res; this.setNZC(res, this.shifterCarry); break; // LSR
-          case 0x4: res = this.shiftReg(a, 2, b & 0xFF, carryIn); this.r[rd] = res; this.setNZC(res, this.shifterCarry); break; // ASR
-          case 0x5: res = (a + b + carryIn) | 0; this.r[rd] = res; this.adcFlags(a, b, carryIn, res); break; // ADC
-          case 0x6: res = (a - b - (1 - carryIn)) | 0; this.r[rd] = res; this.sbcFlags(a, b, carryIn, res); break; // SBC
-          case 0x7: res = this.shiftReg(a, 3, b & 0xFF, carryIn); this.r[rd] = res; this.setNZC(res, this.shifterCarry); break; // ROR
-          case 0x8: res = a & b; this.setNZ(res); break; // TST
-          case 0x9: res = (0 - b) | 0; this.r[rd] = res; this.subFlags(0, b, res); break; // NEG
-          case 0xA: res = (a - b) | 0; this.subFlags(a, b, res); break; // CMP
-          case 0xB: res = (a + b) | 0; this.addFlags(a, b, res); break; // CMN
-          case 0xC: res = a | b; this.r[rd] = res; this.setNZ(res); break; // ORR
-          case 0xD: res = Math.imul(a, b); this.r[rd] = res; this.setNZ(res); break; // MUL
-          case 0xE: res = a & ~b; this.r[rd] = res; this.setNZ(res); break; // BIC
-          case 0xF: res = ~b; this.r[rd] = res; this.setNZ(res); break; // MVN
+          case 0x0: res = a & b; this.r[rd] = res; this.setNZ(res); break;
+          case 0x1: res = a ^ b; this.r[rd] = res; this.setNZ(res); break;
+          case 0x2: res = this.shiftReg(a, 0, b & 0xFF, carryIn); this.r[rd] = res; this.setNZC(res, this.shifterCarry); intCyc = 2; break;
+          case 0x3: res = this.shiftReg(a, 1, b & 0xFF, carryIn); this.r[rd] = res; this.setNZC(res, this.shifterCarry); intCyc = 2; break;
+          case 0x4: res = this.shiftReg(a, 2, b & 0xFF, carryIn); this.r[rd] = res; this.setNZC(res, this.shifterCarry); intCyc = 2; break;
+          case 0x5: res = (a + b + carryIn) | 0; this.r[rd] = res; this.adcFlags(a, b, carryIn, res); break;
+          case 0x6: res = (a - b - (1 - carryIn)) | 0; this.r[rd] = res; this.sbcFlags(a, b, carryIn, res); break;
+          case 0x7: res = this.shiftReg(a, 3, b & 0xFF, carryIn); this.r[rd] = res; this.setNZC(res, this.shifterCarry); intCyc = 2; break;
+          case 0x8: res = a & b; this.setNZ(res); break;
+          case 0x9: res = (0 - b) | 0; this.r[rd] = res; this.subFlags(0, b, res); break;
+          case 0xA: res = (a - b) | 0; this.subFlags(a, b, res); break;
+          case 0xB: res = (a + b) | 0; this.addFlags(a, b, res); break;
+          case 0xC: res = a | b; this.r[rd] = res; this.setNZ(res); break;
+          case 0xD: res = Math.imul(a, b); this.r[rd] = res; this.setNZ(res); intCyc = 3; break;
+          case 0xE: res = a & ~b; this.r[rd] = res; this.setNZ(res); break;
+          case 0xF: res = ~b; this.r[rd] = res; this.setNZ(res); break;
         }
-        return 1;
+        return this.finishCycles(pcRegion, true, intCyc, false);
       }
 
       if (subTop === 1) {
@@ -3317,16 +4136,22 @@ class GBA {
         const vs = (rs === 15) ? ((this.r[15] + 2) | 0) : this.r[rs];
         const vd = (rd === 15) ? ((this.r[15] + 2) | 0) : this.r[rd];
 
-        if (op === 0) { // ADD Rd, Rs (does not affect flags)
+        if (op === 0) {
           this.r[rd] = (vd + vs) | 0;
-          if (rd === 15) this.r[15] &= ~1;
-        } else if (op === 1) { // CMP Rd, Rs (sets flags!)
+          if (rd === 15) {
+            this.r[15] &= ~1;
+            this.pipePc = -1;
+          }
+        } else if (op === 1) {
           const res = (vd - vs) | 0;
           this.subFlags(vd, vs, res);
-        } else if (op === 2) { // MOV Rd, Rs (does not affect flags)
+        } else if (op === 2) {
           this.r[rd] = vs;
-          if (rd === 15) this.r[15] &= ~1;
-        } else { // BX Rs
+          if (rd === 15) {
+            this.r[15] &= ~1;
+            this.pipePc = -1;
+          }
+        } else {
           if (vs & 1) {
             this.cpsr |= FLAG_T;
             this.r[15] = (vs & ~1) | 0;
@@ -3334,9 +4159,9 @@ class GBA {
             this.cpsr &= ~FLAG_T;
             this.r[15] = (vs & ~3) | 0;
           }
-          return 3;
+          this.pipePc = -1;
         }
-        return 1;
+        return this.finishCycles(pcRegion, true, 1, this.pipePc === -1);
       }
 
       if (subTop === 2 || subTop === 3) {
@@ -3345,7 +4170,7 @@ class GBA {
         const imm8 = (instr & 0xFF) << 2;
         const addr = (((pc + 4) & ~3) + imm8) >>> 0;
         this.r[rd] = this.read32(addr) | 0;
-        return 3;
+        return this.finishCycles(pcRegion, true, 2, false);
       }
 
       // Format 7 & 8: Load / Store with register offset
@@ -3355,36 +4180,34 @@ class GBA {
       const addr = (this.r[rb] + this.r[ro]) >>> 0;
 
       if ((instr & 0x0200) === 0) {
-        // Format 7: STR, STRB, LDR, LDRB [Rb, Ro]
         const op = (instr >>> 10) & 3;
-        if (op === 0) { // STR
+        if (op === 0) {
           this.write32(addr, this.r[rd]);
-          return 2;
-        } else if (op === 1) { // STRB
+          return this.finishCycles(pcRegion, true, 1, false);
+        } else if (op === 1) {
           this.write8(addr, this.r[rd] & 0xFF);
-          return 2;
-        } else if (op === 2) { // LDR
+          return this.finishCycles(pcRegion, true, 1, false);
+        } else if (op === 2) {
           this.r[rd] = this.read32(addr) | 0;
-          return 3;
-        } else { // LDRB
+          return this.finishCycles(pcRegion, true, 2, false);
+        } else {
           this.r[rd] = this.read8(addr);
-          return 3;
+          return this.finishCycles(pcRegion, true, 2, false);
         }
       } else {
-        // Format 8: STRH, LDSB, LDRH, LDSH [Rb, Ro]
         const op = (instr >>> 10) & 3;
-        if (op === 0) { // STRH
+        if (op === 0) {
           this.write16(addr, this.r[rd] & 0xFFFF);
-          return 2;
-        } else if (op === 1) { // LDSB
+          return this.finishCycles(pcRegion, true, 1, false);
+        } else if (op === 1) {
           this.r[rd] = (this.read8(addr) << 24) >> 24;
-          return 3;
-        } else if (op === 2) { // LDRH (rotated if misaligned!)
+          return this.finishCycles(pcRegion, true, 2, false);
+        } else if (op === 2) {
           this.r[rd] = this.read16Rotated(addr) | 0;
-          return 3;
-        } else { // LDSH
+          return this.finishCycles(pcRegion, true, 2, false);
+        } else {
           this.r[rd] = this.readSigned16(addr);
-          return 3;
+          return this.finishCycles(pcRegion, true, 2, false);
         }
       }
     }
@@ -3395,18 +4218,18 @@ class GBA {
       const imm5 = (instr >>> 6) & 0x1F;
       const rb   = (instr >>> 3) & 7;
       const rd   = instr & 7;
-      if (op === 0) { // STR Rd, [Rb, #imm5*4]
+      if (op === 0) {
         this.write32((this.r[rb] + (imm5 << 2)) >>> 0, this.r[rd]);
-        return 2;
-      } else if (op === 1) { // LDR Rd, [Rb, #imm5*4]
+        return this.finishCycles(pcRegion, true, 1, false);
+      } else if (op === 1) {
         this.r[rd] = this.read32((this.r[rb] + (imm5 << 2)) >>> 0) | 0;
-        return 3;
-      } else if (op === 2) { // STRB Rd, [Rb, #imm5]
+        return this.finishCycles(pcRegion, true, 2, false);
+      } else if (op === 2) {
         this.write8((this.r[rb] + imm5) >>> 0, this.r[rd] & 0xFF);
-        return 2;
-      } else { // LDRB Rd, [Rb, #imm5]
+        return this.finishCycles(pcRegion, true, 1, false);
+      } else {
         this.r[rd] = this.read8((this.r[rb] + imm5) >>> 0);
-        return 3;
+        return this.finishCycles(pcRegion, true, 2, false);
       }
     }
 
@@ -3420,10 +4243,10 @@ class GBA {
         const addr   = (this.r[rb] + off) >>> 0;
         if (isLoad) {
           this.r[rd] = this.read16Rotated(addr) | 0;
-          return 3;
+          return this.finishCycles(pcRegion, true, 2, false);
         } else {
           this.write16(addr, this.r[rd] & 0xFFFF);
-          return 2;
+          return this.finishCycles(pcRegion, true, 1, false);
         }
       } else {
         // Format 11: SP-relative Load / Store [SP, #imm8*4]
@@ -3433,10 +4256,10 @@ class GBA {
         const addr   = (this.r[13] + off) >>> 0;
         if (isLoad) {
           this.r[rd] = this.read32(addr) | 0;
-          return 3;
+          return this.finishCycles(pcRegion, true, 2, false);
         } else {
           this.write32(addr, this.r[rd]);
-          return 2;
+          return this.finishCycles(pcRegion, true, 1, false);
         }
       }
     }
@@ -3449,7 +4272,7 @@ class GBA {
         const off   = (instr & 0xFF) << 2;
         const base  = useSp ? (this.r[13] >>> 0) : (((pc + 4) & ~3) >>> 0);
         this.r[rd]  = (base + off) | 0;
-        return 1;
+        return this.finishCycles(pcRegion, true, 1, false);
       } else {
         const sub = (instr >>> 8) & 0xF;
         if (sub === 0) {
@@ -3457,39 +4280,48 @@ class GBA {
           const isNeg = (instr & 0x80) !== 0;
           const off   = (instr & 0x7F) << 2;
           this.r[13]  = (isNeg ? (this.r[13] - off) : (this.r[13] + off)) | 0;
-          return 1;
+          return this.finishCycles(pcRegion, true, 1, false);
         } else {
           // Format 14: Push / Pop registers
           const isPop = (instr & 0x0800) !== 0;
           const pclr  = (instr & 0x0100) !== 0;
           const rlist = instr & 0xFF;
 
-          // Edge case: empty rlist and pclr=0 in Thumb PUSH/POP
+          // Edge case: empty rlist and pclr=0 in Thumb PUSH/POP:
+          // On ARM7TDMI, stores R15 (pc + 6) at SP - 0x40 (or loads R15 from SP) and adjusts SP by 0x40!
           if (rlist === 0 && !pclr) {
             if (isPop) {
               this.r[15] = (this.read32Aligned(this.r[13] >>> 0) & ~1) | 0;
               this.r[13] = (this.r[13] + 0x40) | 0;
+              this.pipePc = -1;
             } else {
               this.r[13] = (this.r[13] - 0x40) | 0;
-              this.write32(this.r[13] >>> 0, (this.r[15] + 2) | 0);
+              this.write32(this.r[13] >>> 0, (pc + 6) | 0);
             }
-            return 3;
+            return this.finishCycles(pcRegion, true, isPop ? 2 : 1, this.pipePc === -1);
           }
 
           let sp = this.r[13] >>> 0;
+          const spReg = (sp >>> 24) & 0xF;
           if (isPop) {
+            let count = pclr ? 1 : 0;
             for (let i = 0; i < 8; i++) {
               if (rlist & (1 << i)) {
                 this.r[i] = this.read32Aligned(sp) | 0;
                 sp = (sp + 4) >>> 0;
+                count++;
               }
             }
             if (pclr) {
               this.r[15] = (this.read32Aligned(sp) & ~1) | 0;
               sp = (sp + 4) >>> 0;
+              this.pipePc = -1;
+            }
+            if (count > 1 && spReg < 16) {
+              this.memCycles -= (count - 1) * (this.ws32N[spReg] - this.ws32S[spReg]);
             }
             this.r[13] = sp | 0;
-            return 3;
+            return this.finishCycles(pcRegion, true, 2, this.pipePc === -1);
           } else {
             let count = pclr ? 1 : 0;
             for (let i = 0; i < 8; i++) if (rlist & (1 << i)) count++;
@@ -3504,7 +4336,10 @@ class GBA {
             if (pclr) {
               this.write32(sp, this.r[14]);
             }
-            return 2;
+            if (count > 1 && spReg < 16) {
+              this.memCycles -= (count - 1) * (this.ws32N[spReg] - this.ws32S[spReg]);
+            }
+            return this.finishCycles(pcRegion, true, 1, false);
           }
         }
       }
@@ -3519,19 +4354,22 @@ class GBA {
         let addr     = this.r[rb] >>> 0;
 
         if (rlist === 0) {
-          // Empty rlist edge case in Thumb LDMIA/STMIA
+          // Tier 1.1 Fix (thumb test 229): Empty rlist in Thumb LDMIA/STMIA!
+          // On ARM7TDMI, STMIA Rb!, {} stores R15 = pc + 6 (the PC seen by the next instruction) and adds 0x40 to Rb!
           if (isLoad) {
             this.r[15] = (this.read32Aligned(addr) & ~1) | 0;
+            this.pipePc = -1;
           } else {
-            this.write32(addr, (this.r[15] + 2) | 0);
+            this.write32(addr, (pc + 6) | 0);
           }
           this.r[rb] = (addr + 0x40) | 0;
-          return 3;
+          return this.finishCycles(pcRegion, true, isLoad ? 2 : 1, this.pipePc === -1);
         }
 
         let count = 0;
         for (let i = 0; i < 8; i++) if (rlist & (1 << i)) count++;
         const newBase = (addr + (count << 2)) >>> 0;
+        const baseReg = (addr >>> 24) & 0xF;
 
         if (isLoad) {
           if (!(rlist & (1 << rb))) {
@@ -3543,7 +4381,10 @@ class GBA {
               addr = (addr + 4) >>> 0;
             }
           }
-          return 3;
+          if (count > 1 && baseReg < 16) {
+            this.memCycles -= (count - 1) * (this.ws32N[baseReg] - this.ws32S[baseReg]);
+          }
+          return this.finishCycles(pcRegion, true, 2, false);
         } else {
           const lowestBit = rlist & -rlist;
           const rbIsFirst = (lowestBit === (1 << rb));
@@ -3554,24 +4395,27 @@ class GBA {
               addr = (addr + 4) >>> 0;
             }
           }
+          if (count > 1 && baseReg < 16) {
+            this.memCycles -= (count - 1) * (this.ws32N[baseReg] - this.ws32S[baseReg]);
+          }
           this.r[rb] = newBase | 0;
-          return 2;
+          return this.finishCycles(pcRegion, true, 1, false);
         }
       } else {
         // Format 16: Conditional branch & Format 17: SWI
         const cond = (instr >>> 8) & 0xF;
         if (cond === 0xF) {
-          // Format 17: Thumb SWI
           this.handleSwi(instr & 0xFF);
-          return 3;
+          return this.finishCycles(pcRegion, true, 3, this.pipePc === -1);
         }
-        if (cond === 0xE) return 1;
+        if (cond === 0xE) return this.finishCycles(pcRegion, true, 1, false);
         if (this.checkCond(cond)) {
-          const offset = ((instr << 24) >> 23); // Sign-extend 8-bit * 2
+          const offset = ((instr << 24) >> 23);
           this.r[15] = ((pc + 4 + offset) & ~1) | 0;
-          return 3;
+          this.pipePc = -1;
+          return this.finishCycles(pcRegion, true, 1, true);
         }
-        return 1;
+        return this.finishCycles(pcRegion, true, 1, false);
       }
     }
 
@@ -3579,25 +4423,27 @@ class GBA {
       const sub = (instr >>> 11) & 3;
       if (sub === 0) {
         // Format 18: Unconditional branch B label
-        const offset = ((instr << 21) >> 20); // Sign-extend 11-bit * 2
+        const offset = ((instr << 21) >> 20);
         this.r[15] = ((pc + 4 + offset) & ~1) | 0;
-        return 3;
+        this.pipePc = -1;
+        return this.finishCycles(pcRegion, true, 1, true);
       } else if (sub === 2) {
-        // Format 19 (first instruction): BL prefix (H=10) -> LR = PC + 4 + (imm11 << 12)
-        const offset = ((instr << 21) >> 9); // Sign-extend 11-bit << 12
+        // Format 19 (first instruction): BL prefix (H=10)
+        const offset = ((instr << 21) >> 9);
         this.r[14] = (pc + 4 + offset) | 0;
-        return 1;
+        return this.finishCycles(pcRegion, true, 1, false);
       } else if (sub === 3) {
-        // Format 19 (second instruction): BL suffix (H=11) -> PC = LR + (imm11 << 1), LR = next_instr | 1
+        // Format 19 (second instruction): BL suffix (H=11)
         const offset = (instr & 0x7FF) << 1;
         const nextLr = (pc + 2) | 1;
         this.r[15] = ((this.r[14] + offset) & ~1) | 0;
         this.r[14] = nextLr | 0;
-        return 3;
+        this.pipePc = -1;
+        return this.finishCycles(pcRegion, true, 1, true);
       }
     }
 
-    return 1;
+    return this.finishCycles(pcRegion, true, 1, false);
   }
 
   // ==========================================================================
@@ -3607,11 +4453,13 @@ class GBA {
   renderScanline(y) {
     const dispcnt = this.io16[0x000 >> 1];
     const rowBase = y * 240;
+    const colorLut = this.colorCorrection ? BGR555_CC_LUT : BGR555_RAW_LUT;
 
     // Forced blank (bit 7): fill scanline with white
     if (dispcnt & 0x0080) {
+      const white = colorLut[0x7FFF];
       for (let x = 0; x < 240; x++) {
-        this.fb32[rowBase + x] = 0xFFFFFFFF;
+        this.fb32[rowBase + x] = white;
       }
       return;
     }
@@ -3623,21 +4471,18 @@ class GBA {
     const objMosH = ((mosaicReg >>> 8) & 0xF) + 1;
     const objMosV = ((mosaicReg >>> 12) & 0xF) + 1;
 
-    // Clear scanline layer buffers
     for (let b = 0; b < 4; b++) {
       this.lineBgValid[b].fill(0);
     }
-    this.lineObjPrio.fill(4); // 4 = transparent / no sprite
+    this.lineObjPrio.fill(4);
     this.lineObjSemi.fill(0);
     this.lineObjWin.fill(0);
     this.lineObjMosaic.fill(0);
 
-    // Render Sprites if OBJ enabled (bit 12)
     if (dispcnt & 0x1000) {
       this.renderSpritesScanline(y, dispcnt, mode, objMosH, objMosV);
     }
 
-    // Render Backgrounds according to Video Mode (0..5)
     if (mode === 0) {
       if (dispcnt & 0x0100) this.renderTextBgScanline(0, y, bgMosH, bgMosV);
       if (dispcnt & 0x0200) this.renderTextBgScanline(1, y, bgMosH, bgMosV);
@@ -3658,7 +4503,6 @@ class GBA {
       if (dispcnt & 0x0400) this.renderBitmapBgScanline(y, 5, dispcnt, bgMosH);
     }
 
-    // Composite priorities, Windows (WIN0, WIN1, OBJWIN), and Color Special Effects (BLDCNT)
     const win0On  = (dispcnt & 0x2000) !== 0;
     const win1On  = (dispcnt & 0x4000) !== 0;
     const objWinOn= (dispcnt & 0x8000) !== 0;
@@ -3687,7 +4531,6 @@ class GBA {
     const evb = Math.min(16, (bldalpha >>> 8) & 0x1F);
     const evy = Math.min(16, bldy & 0x1F);
 
-    // Enabled BGs sorted by priority (0..3) then BG index (0..3)
     const bgEnMask = (dispcnt >>> 8) & 0xF;
     const bgPrios = [
       this.io16[0x008 >> 1] & 3,
@@ -3699,7 +4542,7 @@ class GBA {
     const backdrop = this.pal16[0];
 
     for (let x = 0; x < 240; x++) {
-      let winMask = 0x3F; // Bits 0-3=BG0-3, Bit 4=OBJ, Bit 5=ColorSFX
+      let winMask = 0x3F;
       if (anyWin) {
         const inW0 = inWin0Y && ((w0x1 <= w0x2) ? (x >= w0x1 && x < w0x2) : (x >= w0x1 || x < w0x2));
         const inW1 = inWin1Y && ((w1x1 <= w1x2) ? (x >= w1x1 && x < w1x2) : (x >= w1x1 || x < w1x2));
@@ -3714,17 +4557,13 @@ class GBA {
         }
       }
 
-      // Find top1 and top2 layers at pixel x
-      // Layer IDs: 0=BG0, 1=BG1, 2=BG2, 3=BG3, 4=OBJ, 5=Backdrop
       let top1Color = backdrop, top1Layer = 5, top1Prio = 4;
       let top2Color = backdrop, top2Layer = 5, top2Prio = 4;
 
       const objPrio = this.lineObjPrio[x];
       const objValid = (objPrio < 4) && ((winMask & 0x10) !== 0);
 
-      // Iterate priority levels 0..3
       for (let prio = 0; prio < 4; prio++) {
-        // Sprites at this priority come BEFORE backgrounds at the same priority!
         if (objValid && objPrio === prio) {
           if (top1Layer === 5) {
             top1Layer = 4; top1Color = this.lineObjColor[x]; top1Prio = prio;
@@ -3752,13 +4591,11 @@ class GBA {
       const isTarget2 = (bldcnt & (1 << (8 + top2Layer))) !== 0;
 
       if (isSemiObj && isTarget2) {
-        // Semi-transparent sprite forces alpha blend with 2nd target regardless of SFX enable bit
         outColor = this.blendColors(top1Color, top2Color, eva, evb);
       } else if (sfxAllowed && isTarget1) {
         if (bldMode === 1 && isTarget2) {
           outColor = this.blendColors(top1Color, top2Color, eva, evb);
-        } else if (bldMode === 2 || (isSemiObj && bldMode === 2)) {
-          // Brightness increase (fade to white)
+        } else if (bldMode === 2) {
           let r = top1Color & 0x1F;
           let g = (top1Color >>> 5) & 0x1F;
           let b = (top1Color >>> 10) & 0x1F;
@@ -3766,8 +4603,7 @@ class GBA {
           g += (((31 - g) * evy) >>> 4);
           b += (((31 - b) * evy) >>> 4);
           outColor = r | (g << 5) | (b << 10);
-        } else if (bldMode === 3 || (isSemiObj && bldMode === 3)) {
-          // Brightness decrease (fade to black)
+        } else if (bldMode === 3) {
           let r = top1Color & 0x1F;
           let g = (top1Color >>> 5) & 0x1F;
           let b = (top1Color >>> 10) & 0x1F;
@@ -3778,17 +4614,9 @@ class GBA {
         }
       }
 
-      // Convert BGR555 to 32-bit RGBA (0xAABBGGRR in little-endian Uint32Array)
-      const r5 = outColor & 0x1F;
-      const g5 = (outColor >>> 5) & 0x1F;
-      const b5 = (outColor >>> 10) & 0x1F;
-      const r8 = (r5 << 3) | (r5 >>> 2);
-      const g8 = (g5 << 3) | (g5 >>> 2);
-      const b8 = (b5 << 3) | (b5 >>> 2);
-      this.fb32[rowBase + x] = (0xFF000000 | (b8 << 16) | (g8 << 8) | r8) >>> 0;
+      this.fb32[rowBase + x] = colorLut[outColor & 0x7FFF];
     }
 
-    // Advance internal affine reference points by PB and PD at end of each visible scanline!
     const pb2 = (this.io16[0x022 >> 1] << 16) >> 16;
     const pd2 = (this.io16[0x026 >> 1] << 16) >> 16;
     const pb3 = (this.io16[0x032 >> 1] << 16) >> 16;
@@ -3808,7 +4636,6 @@ class GBA {
     return r | (g << 5) | (b << 10);
   }
 
-  // Regular Text Background (Modes 0 & 1, 4bpp / 8bpp, 256x256, 512x256, 256x512, 512x512)
   renderTextBgScanline(bgIdx, y, bgMosH, bgMosV) {
     const cnt = this.io16[(0x008 + bgIdx * 2) >> 1];
     const isMos = (cnt & 0x0040) !== 0;
@@ -3882,7 +4709,6 @@ class GBA {
     }
   }
 
-  // Affine Tile Background (Modes 1 & 2, BG2 & BG3, 8bpp, sizes 128..1024, wraparound)
   renderAffineBgScanline(bgIdx, y, bgMosH) {
     const cnt = this.io16[(0x008 + bgIdx * 2) >> 1];
     const isMos    = (cnt & 0x0040) !== 0;
@@ -3890,8 +4716,8 @@ class GBA {
     const scrBase  = ((cnt >>> 8) & 0x1F) * 0x800;
     const wrap     = (cnt & 0x2000) !== 0;
     const sizeMode = (cnt >>> 14) & 3;
-    const dimTiles = 16 << sizeMode; // 16, 32, 64, 128 tiles
-    const dimPx    = dimTiles << 3;  // 128, 256, 512, 1024 px
+    const dimTiles = 16 << sizeMode;
+    const dimPx    = dimTiles << 3;
     const dimMask  = dimPx - 1;
 
     const affIdx = bgIdx - 2;
@@ -3941,10 +4767,8 @@ class GBA {
     }
   }
 
-  // Bitmap Backgrounds (Modes 3, 4, 5 on BG2) WITH Full Affine Matrix & Reference Point Support!
-  // Supports stretching e.g. 120x80 by 2x via BG2PA/PD!
   renderBitmapBgScanline(y, mode, dispcnt, bgMosH) {
-    const cnt = this.io16[0x00C >> 1]; // BG2CNT
+    const cnt = this.io16[0x00C >> 1];
     const isMos = (cnt & 0x0040) !== 0;
     const wrap  = (cnt & 0x2000) !== 0;
 
@@ -4001,25 +4825,22 @@ class GBA {
     }
   }
 
-  // Sprite Renderer (Regular & Affine/Double-Size, 1D/2D Mapping, 4bpp/8bpp, Priorities, Bitmap Tile 512+ Rule)
   renderSpritesScanline(y, dispcnt, mode, objMosH, objMosV) {
     const is1D = (dispcnt & 0x0040) !== 0;
-    // Sprite Dimension Lookup Table: [shape][size] -> [width, height]
     const dims = [
-      [[8,8], [16,16], [32,32], [64,64]], // Square (shape=0)
-      [[16,8], [32,8], [32,16], [64,32]], // Horizontal (shape=1)
-      [[8,16], [8,32], [16,32], [32,64]]  // Vertical (shape=2)
+      [[8,8], [16,16], [32,32], [64,64]],
+      [[16,8], [32,8], [32,16], [64,32]],
+      [[8,16], [8,32], [16,32], [32,64]]
     ];
 
-    // Iterate all 128 OAM entries in order 0..127 (lower index has higher priority for same prio level)
     for (let i = 0; i < 128; i++) {
       const oamBase = i * 4;
       const attr0 = this.oam16[oamBase];
       const objMode = (attr0 >>> 8) & 3;
-      if (objMode === 2) continue; // Disabled regular sprite
+      if (objMode === 2) continue;
 
       const shape = (attr0 >>> 14) & 3;
-      if (shape === 3) continue; // Prohibited shape
+      if (shape === 3) continue;
 
       const attr1 = this.oam16[oamBase + 1];
       const attr2 = this.oam16[oamBase + 2];
@@ -4044,13 +4865,11 @@ class GBA {
       if (sprX >= 240) sprX -= 512;
 
       const is8bpp  = (attr0 & 0x2000) !== 0;
-      const gfxMode = (attr0 >>> 10) & 3; // 0=Normal, 1=Semi-Transparent, 2=OBJ Window
+      const gfxMode = (attr0 >>> 10) & 3;
       const tileBase= attr2 & 0x3FF;
       const prio    = (attr2 >>> 10) & 3;
       const palBank = (attr2 >>> 12) & 0xF;
 
-      // CRITICAL HARDWARE RULE: In Bitmap Modes (3, 4, 5), tiles 0..511 are occupied by BG bitmap!
-      // Any sprite referencing tiles < 512 is NOT drawn!
       if (mode >= 3 && tileBase < 512) continue;
 
       let pa = 256, pb = 0, pc = 0, pd = 256;
@@ -4095,7 +4914,6 @@ class GBA {
           const offsetTiles = tileY * tilesPerRow + tileX;
           tileNum = tileBase + (is8bpp ? (offsetTiles << 1) : offsetTiles);
         } else {
-          // 2D mapping: 32x32 tile sheet
           tileNum = (tileBase + tileY * 32 + (is8bpp ? (tileX << 1) : tileX)) & 0x3FF;
         }
 
@@ -4116,7 +4934,6 @@ class GBA {
 
         if (palIdx !== 0) {
           if (gfxMode === 2) {
-            // OBJ Window mask
             this.lineObjWin[screenX] = 1;
           } else if (prio < this.lineObjPrio[screenX]) {
             this.lineObjColor[screenX] = this.pal16[0x100 + palIdx];
@@ -4129,15 +4946,17 @@ class GBA {
   }
 
   // ==========================================================================
-  // Frame & Scanline Scheduler + Sound Mixer (PSG 1-4 + Direct Sound FIFO A/B)
+  // Frame & Scanline Scheduler + Sound Mixer (PSG 1-4 + Wave RAM + FIFO A/B)
   // ==========================================================================
 
   runFrame() {
+    if (this.cheats.length > 0) {
+      this.applyCheats();
+    }
     for (let line = 0; line < 228; line++) {
       this.vcount = line;
       this.io16[0x006 >> 1] = line;
 
-      // Update V-Counter match flag (bit 2 of DISPSTAT)
       let dispstat = this.io16[0x004 >> 1];
       const lyc = (dispstat >>> 8) & 0xFF;
       if (line === lyc) {
@@ -4148,39 +4967,30 @@ class GBA {
       }
 
       if (line === 160) {
-        // Enter VBlank (lines 160..226)
         dispstat |= 0x0001;
         this.io16[0x004 >> 1] = dispstat;
         if (dispstat & 0x0008) this.requestIrq(IRQ_VBLANK);
-        // Also update BIOS IF mirror at 0x03007FF8 for VBlankIntrWait compatibility
-        this.write16(0x03007FF8, this.read16(0x03007FF8) | IRQ_VBLANK);
-        // Trigger VBlank DMAs (timing = 1)
+        this.iwram16[0x7FF8 >> 1] |= IRQ_VBLANK;
         this.triggerDmaTiming(1);
-        // Reload internal affine reference points at VBlank!
         this.bgRefX[0] = (this.io32[0x028 >> 2] << 4) >> 4;
         this.bgRefY[0] = (this.io32[0x02C >> 2] << 4) >> 4;
         this.bgRefX[1] = (this.io32[0x038 >> 2] << 4) >> 4;
         this.bgRefY[1] = (this.io32[0x03C >> 2] << 4) >> 4;
       } else if (line === 227) {
-        // VBlank flag cleared on line 227
         dispstat &= ~0x0001;
       }
-      this.io16[0x004 >> 1] = dispstat & ~0x0002; // HBlank=0
+      this.io16[0x004 >> 1] = dispstat & ~0x0002;
 
-      // Execute visible / HDraw period (960 cycles)
       this.runCycles(960);
 
-      // Render scanline if visible (lines 0..159)
       if (line < 160) {
         this.renderScanline(line);
       }
 
-      // Enter HBlank (272 cycles)
       dispstat = this.io16[0x004 >> 1] | 0x0002;
       this.io16[0x004 >> 1] = dispstat;
       if (dispstat & 0x0010) this.requestIrq(IRQ_HBLANK);
       if (line < 160) {
-        // HBlank DMA only triggers on visible scanlines 0..159!
         this.triggerDmaTiming(2);
       }
 
@@ -4192,6 +5002,14 @@ class GBA {
   runCycles(targetCycles) {
     let rem = targetCycles;
     while (rem > 0) {
+      if (this.dmaCyclesStall > 0) {
+        const stall = (this.dmaCyclesStall < rem) ? this.dmaCyclesStall : rem;
+        this.dmaCyclesStall -= stall;
+        this.stepTimers(stall);
+        this.cycles += stall;
+        rem -= stall;
+        if (rem <= 0) break;
+      }
       if (this.halted) {
         this.stepTimers(rem);
         this.cycles += rem;
@@ -4204,14 +5022,83 @@ class GBA {
     }
   }
 
+  // Step 512 Hz PSG Frame Sequencer (Length @ 256Hz, Sweep @ 128Hz, Envelope @ 64Hz)
+  stepPsgFrameSequencer() {
+    this.psgFrameSeqSub += 1232;
+    if (this.psgFrameSeqSub < 32768) return;
+    this.psgFrameSeqSub -= 32768;
+
+    const step = this.psgFrameSeqStep & 7;
+    this.psgFrameSeqStep = (step + 1) & 7;
+
+    // 256 Hz: Length counters (steps 0, 2, 4, 6)
+    if ((step & 1) === 0) {
+      const lenRegs = [0x064, 0x06C, 0x074, 0x07C];
+      for (let c = 0; c < 4; c++) {
+        if (this.psgEnabled[c] && (this.io16[lenRegs[c] >> 1] & 0x4000)) {
+          if (this.psgLen[c] > 0) {
+            this.psgLen[c]--;
+            if (this.psgLen[c] === 0) {
+              this.psgEnabled[c] = 0;
+            }
+          }
+        }
+      }
+    }
+
+    // 128 Hz: Channel 1 Frequency Sweep (steps 2, 6)
+    if (step === 2 || step === 6) {
+      if (this.psgEnabled[0]) {
+        const cntL = this.io16[0x060 >> 1];
+        const sweepTime = (cntL >>> 4) & 7;
+        const shift = cntL & 7;
+        if (sweepTime > 0 && shift > 0) {
+          this.psgSweepTimer--;
+          if (this.psgSweepTimer <= 0) {
+            this.psgSweepTimer = sweepTime;
+            const delta = this.psgFreq[0] >>> shift;
+            const nextFreq = (cntL & 0x0008) ? (this.psgFreq[0] - delta) : (this.psgFreq[0] + delta);
+            if (nextFreq > 2047) {
+              this.psgEnabled[0] = 0;
+            } else if (nextFreq >= 0) {
+              this.psgFreq[0] = nextFreq;
+              this.io16[0x064 >> 1] = (this.io16[0x064 >> 1] & ~0x7FF) | (nextFreq & 0x7FF);
+            }
+          }
+        }
+      }
+    }
+
+    // 64 Hz: Volume Envelopes on Channels 1, 2, 4 (step 7)
+    if (step === 7) {
+      const envRegs = [0x062, 0x068, 0, 0x078];
+      for (const c of [0, 1, 3]) {
+        if (!this.psgEnabled[c]) continue;
+        const reg = this.io16[envRegs[c] >> 1];
+        const period = (reg >>> 8) & 7;
+        if (period > 0) {
+          this.psgEnvTimer[c]--;
+          if (this.psgEnvTimer[c] <= 0) {
+            this.psgEnvTimer[c] = period;
+            const dirUp = (reg & 0x0800) !== 0;
+            if (dirUp && this.psgVol[c] < 15) this.psgVol[c]++;
+            else if (!dirUp && this.psgVol[c] > 0) this.psgVol[c]--;
+          }
+        }
+      }
+    }
+  }
+
   sampleAudioScanline() {
-    // Generate ~2 audio samples per scanline (~456 samples/frame * 59.73 fps ~= 27236 Hz, or 548 samples for 32768 Hz)
     const sndCntX = this.io16[0x084 >> 1];
     if (!(sndCntX & 0x0080)) {
       this.pushAudioSample(0, 0);
       this.pushAudioSample(0, 0);
       return;
     }
+
+    this.stepPsgFrameSequencer();
+
     const sndCntL = this.io16[0x080 >> 1];
     const sndCntH = this.io16[0x082 >> 1];
 
@@ -4221,46 +5108,87 @@ class GBA {
     const sampA = (this.fifoALatch / 128.0) * volA;
     const sampB = (this.fifoBLatch / 128.0) * volB;
 
-    // PSG Channels 1..4 (Square 1, Square 2, Wave, Noise)
+    const duties = [0.125, 0.25, 0.5, 0.75];
     let psgL = 0, psgR = 0;
-    // Channel 1 (Square 1: 0x60..0x64)
-    const ch1Freq = this.io16[0x064 >> 1] & 0x7FF;
-    const ch1Vol  = (this.io16[0x062 >> 1] >>> 12) & 0xF;
-    if (ch1Vol > 0 && ch1Freq < 2040) {
+
+    // Channel 1 (Square 1 + Sweep + Envelope)
+    const ch1Freq = (this.psgFreq[0] || (this.io16[0x064 >> 1] & 0x7FF));
+    const ch1Vol  = this.psgEnabled[0] ? this.psgVol[0] : ((this.io16[0x062 >> 1] >>> 12) & 0xF);
+    if (ch1Vol > 0 && ch1Freq < 2046) {
+      const duty = duties[(this.io16[0x062 >> 1] >>> 6) & 3];
       const hz = 131072 / (2048 - ch1Freq);
       this.psgPhase[0] = (this.psgPhase[0] + hz / 13620) % 1.0;
-      const s = (this.psgPhase[0] < 0.5 ? 1 : -1) * (ch1Vol / 15) * 0.15;
+      const s = (this.psgPhase[0] < duty ? 1 : -1) * (ch1Vol / 15) * 0.15;
       if (sndCntL & 0x1000) psgL += s;
       if (sndCntL & 0x0100) psgR += s;
     }
-    // Channel 2 (Square 2: 0x68..0x6C)
+
+    // Channel 2 (Square 2 + Envelope)
     const ch2Freq = this.io16[0x06C >> 1] & 0x7FF;
-    const ch2Vol  = (this.io16[0x068 >> 1] >>> 12) & 0xF;
-    if (ch2Vol > 0 && ch2Freq < 2040) {
+    const ch2Vol  = this.psgEnabled[1] ? this.psgVol[1] : ((this.io16[0x068 >> 1] >>> 12) & 0xF);
+    if (ch2Vol > 0 && ch2Freq < 2046) {
+      const duty = duties[(this.io16[0x068 >> 1] >>> 6) & 3];
       const hz = 131072 / (2048 - ch2Freq);
       this.psgPhase[1] = (this.psgPhase[1] + hz / 13620) % 1.0;
-      const s = (this.psgPhase[1] < 0.5 ? 1 : -1) * (ch2Vol / 15) * 0.15;
+      const s = (this.psgPhase[1] < duty ? 1 : -1) * (ch2Vol / 15) * 0.15;
       if (sndCntL & 0x2000) psgL += s;
       if (sndCntL & 0x0200) psgR += s;
     }
-    // Channel 4 (Noise: 0x78..0x7C)
-    const ch4Vol = (this.io16[0x078 >> 1] >>> 12) & 0xF;
-    if (ch4Vol > 0 && (this.io16[0x07C >> 1] & 0x8000)) {
+
+    // Channel 3 (Wave RAM: 2 banks of 32 4-bit nibbles, 32 or 64 sample mode)
+    const ch3CntL = this.io16[0x070 >> 1];
+    if ((ch3CntL & 0x0080) && this.psgEnabled[2]) {
+      const ch3CntH = this.io16[0x072 >> 1];
+      const ch3Freq = this.io16[0x074 >> 1] & 0x7FF;
+      const volCode = (ch3CntH >>> 13) & 3;
+      const force75 = (ch3CntH & 0x8000) !== 0;
+      const volMul  = force75 ? 0.75 : ([0.0, 1.0, 0.5, 0.25][volCode]);
+      if (volMul > 0 && ch3Freq < 2046) {
+        const is64 = (ch3CntL & 0x0020) !== 0;
+        const bank = (ch3CntL >>> 6) & 1;
+        const numSamples = is64 ? 64 : 32;
+        const sampleRate = 2097152 / (2048 - ch3Freq);
+        this.psgPhase[2] = (this.psgPhase[2] + sampleRate / 13620) % numSamples;
+        const sampIdx = this.psgPhase[2] | 0;
+        const byteIdx = is64 ? (sampIdx >>> 1) : ((bank << 4) | (sampIdx >>> 1));
+        const byteVal = this.waveRam[byteIdx & 31];
+        const nib = (sampIdx & 1) ? (byteVal & 0xF) : (byteVal >>> 4);
+        const s = ((nib - 7.5) / 7.5) * volMul * 0.18;
+        if (sndCntL & 0x4000) psgL += s;
+        if (sndCntL & 0x0400) psgR += s;
+      }
+    }
+
+    // Channel 4 (LFSR Noise: 7-bit or 15-bit)
+    const ch4Vol = this.psgEnabled[3] ? this.psgVol[3] : ((this.io16[0x078 >> 1] >>> 12) & 0xF);
+    if (ch4Vol > 0 && (this.psgEnabled[3] || (this.io16[0x07C >> 1] & 0x8000))) {
+      const is7Bit = (this.io16[0x07C >> 1] & 0x0008) !== 0;
       const bit = (this.psgLfsr ^ (this.psgLfsr >>> 1)) & 1;
-      this.psgLfsr = (this.psgLfsr >>> 1) | (bit << 14);
+      this.psgLfsr = (this.psgLfsr >>> 1) | (bit << (is7Bit ? 6 : 14));
       const s = ((this.psgLfsr & 1) ? 1 : -1) * (ch4Vol / 15) * 0.1;
       if (sndCntL & 0x8000) psgL += s;
       if (sndCntL & 0x0800) psgR += s;
     }
 
-    let outL = psgL, outR = psgR;
+    // PSG master volume & ratio (SOUNDCNT_L bits 0..2 / 4..6 & SOUNDCNT_H bits 0..1)
+    const psgRatio = [0.25, 0.5, 1.0, 1.0][sndCntH & 3];
+    const masR = (((sndCntL & 7) + 1) / 8.0) * psgRatio;
+    const masL = ((((sndCntL >>> 4) & 7) + 1) / 8.0) * psgRatio;
+    let outL = psgL * masL;
+    let outR = psgR * masR;
+
     if (sndCntH & 0x0200) outL += sampA * 0.5;
     if (sndCntH & 0x0100) outR += sampA * 0.5;
     if (sndCntH & 0x2000) outL += sampB * 0.5;
     if (sndCntH & 0x1000) outR += sampB * 0.5;
 
-    outL = Math.max(-1, Math.min(1, outL));
-    outR = Math.max(-1, Math.min(1, outR));
+    // SOUNDBIAS (0x04000088) amplitude resolution quantization (9/8/7/6-bit)
+    const sndBias = this.io16[0x088 >> 1];
+    const resMode = (sndBias >>> 14) & 3;
+    const steps = [512, 256, 128, 64][resMode];
+    outL = Math.round(Math.max(-1, Math.min(1, outL)) * steps) / steps;
+    outR = Math.round(Math.max(-1, Math.min(1, outR)) * steps) / steps;
+
     this.pushAudioSample(outL, outR);
     this.pushAudioSample(outL, outR);
   }
@@ -4275,7 +5203,54 @@ class GBA {
   }
 
   // ==========================================================================
-  // Tier 2: Save States (.1337state) & ARM/Thumb Disassembler
+  // Tier 3: Cheat Engine (Raw ADDR:VAL & CodeBreaker 3xxxxxxx/8xxxxxxx)
+  // ==========================================================================
+
+  addCheat(codeStr, desc) {
+    const clean = String(codeStr || '').trim().toUpperCase();
+    if (!clean) return null;
+    let addr = 0, val = 0, width = 1;
+    if (clean.indexOf(':') !== -1) {
+      const parts = clean.split(':');
+      addr = parseInt(parts[0], 16) >>> 0;
+      val  = parseInt(parts[1], 16) >>> 0;
+      width = (parts[1].length > 4) ? 4 : ((parts[1].length > 2) ? 2 : 1);
+    } else {
+      const parts = clean.split(/\s+/);
+      if (parts.length >= 2) {
+        const w1 = parseInt(parts[0], 16) >>> 0;
+        const w2 = parseInt(parts[1], 16) >>> 0;
+        const cmd = (w1 >>> 28) & 0xF;
+        addr = w1 & 0x0FFFFFFF;
+        val  = w2;
+        width = (cmd === 8) ? 2 : ((cmd === 3) ? 1 : 4);
+      } else {
+        return null;
+      }
+    }
+    const entry = { code: clean, desc: desc || clean, enabled: true, addr, val, width };
+    this.cheats.push(entry);
+    return entry;
+  }
+
+  clearCheats() {
+    this.cheats = [];
+  }
+
+  applyCheats() {
+    const savedMem = this.memCycles;
+    for (let i = 0; i < this.cheats.length; i++) {
+      const ch = this.cheats[i];
+      if (!ch.enabled) continue;
+      if (ch.width === 1) this.write8(ch.addr, ch.val & 0xFF);
+      else if (ch.width === 2) this.write16(ch.addr, ch.val & 0xFFFF);
+      else this.write32(ch.addr, ch.val >>> 0);
+    }
+    this.memCycles = savedMem;
+  }
+
+  // ==========================================================================
+  // Save States (.1337state) & ARM/Thumb Disassembler
   // ==========================================================================
 
   serializeState() {
@@ -4297,6 +5272,15 @@ class GBA {
       spsrUnd: this.spsrUnd,
       halted: this.halted,
       vcount: this.vcount,
+      biosLastFetch: this.biosLastFetch,
+      inIntrWaitMask: this.inIntrWaitMask,
+      saveType: this.saveType,
+      flashBank: this.flashBank,
+      flashStage: this.flashStage,
+      flashCmd: this.flashCmd,
+      flashIdMode: this.flashIdMode,
+      flashEraseMode: this.flashEraseMode,
+      eepromAddrBits: this.eepromAddrBits,
       bgRefX: Array.from(this.bgRefX),
       bgRefY: Array.from(this.bgRefY),
       timerVal: Array.from(this.timerVal),
@@ -4312,15 +5296,18 @@ class GBA {
       pal: uint8ToBase64(this.pal),
       vram: uint8ToBase64(this.vram),
       oam: uint8ToBase64(this.oam),
-      sram: uint8ToBase64(this.sram)
+      sram: uint8ToBase64(this.sram),
+      flash: (this.saveType === 'FLASH64' || this.saveType === 'FLASH128') ? uint8ToBase64(this.flash) : '',
+      eeprom: (this.saveType === 'EEPROM' || this.eepromUsed) ? uint8ToBase64(this.eeprom) : ''
     });
   }
 
   deserializeState(jsonStr) {
-    const st = JSON.parse(jsonStr);
+    const st = (typeof jsonStr === 'string') ? JSON.parse(jsonStr) : jsonStr;
     if (!st || st.magic !== '1337STATE_V1') throw new Error('Invalid .1337state file');
     this.r.set(st.r);
     this.cpsr = st.cpsr;
+    this.pipePc = -1;
     this.bankUsr.set(st.bankUsr);
     this.bankFiq.set(st.bankFiq);
     this.bankIrq.set(st.bankIrq);
@@ -4334,6 +5321,15 @@ class GBA {
     this.spsrUnd = st.spsrUnd;
     this.halted = !!st.halted;
     this.vcount = st.vcount | 0;
+    if (st.biosLastFetch !== undefined) this.biosLastFetch = st.biosLastFetch >>> 0;
+    if (st.inIntrWaitMask !== undefined) this.inIntrWaitMask = st.inIntrWaitMask | 0;
+    if (st.saveType) this.saveType = st.saveType;
+    if (st.flashBank !== undefined) this.flashBank = st.flashBank | 0;
+    if (st.flashStage !== undefined) this.flashStage = st.flashStage | 0;
+    if (st.flashCmd !== undefined) this.flashCmd = st.flashCmd | 0;
+    if (st.flashIdMode !== undefined) this.flashIdMode = !!st.flashIdMode;
+    if (st.flashEraseMode !== undefined) this.flashEraseMode = !!st.flashEraseMode;
+    if (st.eepromAddrBits !== undefined) this.eepromAddrBits = st.eepromAddrBits | 0;
     this.bgRefX.set(st.bgRefX);
     this.bgRefY.set(st.bgRefY);
     this.timerVal.set(st.timerVal);
@@ -4350,82 +5346,44 @@ class GBA {
     this.vram.set(base64ToUint8(st.vram));
     this.oam.set(base64ToUint8(st.oam));
     this.sram.set(base64ToUint8(st.sram));
+    if (st.flash) this.flash.set(base64ToUint8(st.flash));
+    if (st.eeprom) this.eeprom.set(base64ToUint8(st.eeprom));
+    this.updateWaitstates(this.io16[0x204 >> 1] & 0x7FFF);
   }
 
   disassembleAt(addr, isThumb) {
     addr >>>= 0;
+    const savedMem = this.memCycles;
     const hex = (n, w) => (n >>> 0).toString(16).toUpperCase().padStart(w, '0');
+    let res = '';
     if (isThumb) {
       const op = this.read16(addr);
       const top3 = (op >>> 13) & 7;
       let mnem = 'THUMB';
-      if (top3 === 0) {
-        const sub = (op >>> 11) & 3;
-        const rd = op & 7, rs = (op >>> 3) & 7;
-        if (sub < 3) mnem = ['LSL','LSR','ASR'][sub] + ' R' + rd + ', R' + rs + ', #' + ((op >>> 6) & 31);
-        else mnem = ((op & 0x200) ? 'SUB' : 'ADD') + ' R' + rd + ', R' + rs + ', ' + ((op & 0x400) ? '#' + ((op >>> 6) & 7) : 'R' + ((op >>> 6) & 7));
-      } else if (top3 === 1) {
-        mnem = ['MOV','CMP','ADD','SUB'][(op >>> 11) & 3] + ' R' + ((op >>> 8) & 7) + ', #0x' + hex(op & 0xFF, 2);
-      } else if (top3 === 2) {
-        if (((op >>> 10) & 7) === 0) {
-          const alu = ['AND','EOR','LSL','LSR','ASR','ADC','SBC','ROR','TST','NEG','CMP','CMN','ORR','MUL','BIC','MVN'][(op >>> 6) & 15];
-          mnem = alu + ' R' + (op & 7) + ', R' + ((op >>> 3) & 7);
-        } else if (((op >>> 10) & 7) === 1) {
-          const hi = ['ADD','CMP','MOV','BX'][(op >>> 8) & 3];
-          const rd = (op & 7) | ((op >>> 4) & 8);
-          const rs = ((op >>> 3) & 7) | ((op >>> 3) & 8);
-          mnem = (hi === 'BX') ? ('BX R' + rs) : (hi + ' R' + rd + ', R' + rs);
-        } else if (((op >>> 11) & 1) === 1) {
-          mnem = 'LDR R' + ((op >>> 8) & 7) + ', [PC, #0x' + hex((op & 0xFF) << 2, 3) + ']';
-        } else {
-          mnem = 'LDR/STR [R' + ((op >>> 3) & 7) + ', R' + ((op >>> 6) & 7) + ']';
-        }
-      } else if (top3 === 3) {
-        mnem = ['STR','LDR','STRB','LDRB'][(op >>> 11) & 3] + ' R' + (op & 7) + ', [R' + ((op >>> 3) & 7) + ', #' + ((op >>> 6) & 31) + ']';
-      } else if (top3 === 4) {
-        mnem = (op & 0x0800 ? 'LDR' : 'STR') + (op & 0x1000 ? ' SP' : 'H') + ' R' + (op & 7);
-      } else if (top3 === 5) {
-        mnem = (op & 0x1000) ? ((op & 0x0800) ? 'POP' : 'PUSH') : 'ADD R' + ((op >>> 8) & 7) + ', PC/SP';
-      } else if (top3 === 6) {
-        if ((op & 0xFF00) === 0xDF00) mnem = 'SWI 0x' + hex(op & 0xFF, 2);
-        else if (op & 0x1000) mnem = 'B' + ['EQ','NE','CS','CC','MI','PL','VS','VC','HI','LS','GE','LT','GT','LE','AL','NV'][(op >>> 8) & 15] + ' 0x' + hex(addr + 4 + ((op << 24) >> 23), 8);
-        else mnem = (op & 0x0800 ? 'LDMIA' : 'STMIA') + ' R' + ((op >>> 8) & 7) + '!';
-      } else {
-        mnem = 'B/BL 0x' + hex(op & 0x7FF, 3);
-      }
-      return hex(addr, 8) + ': ' + hex(op, 4) + '      ' + mnem;
+      if (top3 === 0) mnem = ((op >>> 11) === 3) ? 'ADD/SUB' : 'SHIFT';
+      else if (top3 === 1) mnem = ['MOV','CMP','ADD','SUB'][(op >>> 11) & 3] + ' R' + ((op >>> 8) & 7) + ', #0x' + hex(op & 0xFF, 2);
+      else if (top3 === 2) mnem = 'ALU/HI/LDR';
+      else if (top3 === 3) mnem = 'LDR/STR IMM';
+      else if (top3 === 4) mnem = 'LDRH/SP-REL';
+      else if (top3 === 5) mnem = 'PUSH/POP/ADD';
+      else if (top3 === 6) mnem = (op & 0x1000) ? 'B<cond>/SWI' : 'LDM/STM';
+      else mnem = 'B / BL';
+      res = `${hex(addr, 8)}: ${hex(op, 4)}      ${mnem}`;
     } else {
       const op = this.read32Aligned(addr);
-      const conds = ['EQ','NE','CS','CC','MI','PL','VS','VC','HI','LS','GE','LT','GT','LE','','NV'];
-      const cStr = conds[op >>> 28];
       const top3 = (op >>> 25) & 7;
+      const dpNames = ['AND','EOR','SUB','RSB','ADD','ADC','SBC','RSC','TST','TEQ','CMP','CMN','ORR','MOV','BIC','MVN'];
       let mnem = 'ARM';
-      if ((op & 0x0FFFFFF0) === 0x012FFF10) {
-        mnem = 'BX' + cStr + ' R' + (op & 15);
-      } else if (top3 === 0 || top3 === 1) {
-        const dpNames = ['AND','EOR','SUB','RSB','ADD','ADC','SBC','RSC','TST','TEQ','CMP','CMN','ORR','MOV','BIC','MVN'];
-        const dp = dpNames[(op >>> 21) & 15];
-        const s = ((op >>> 20) & 1) && ((op >>> 21) & 15) < 8 || ((op >>> 21) & 15) >= 12 ? 'S' : '';
-        const rd = (op >>> 12) & 15, rn = (op >>> 16) & 15;
-        if (top3 === 1) {
-          const imm8 = op & 0xFF, rot = ((op >>> 8) & 15) << 1;
-          const v = rot ? ((imm8 >>> rot) | (imm8 << (32 - rot))) : imm8;
-          mnem = dp + cStr + s + ' R' + rd + ', R' + rn + ', #0x' + hex(v, 1);
-        } else {
-          mnem = dp + cStr + s + ' R' + rd + ', R' + rn + ', R' + (op & 15);
-        }
-      } else if (top3 === 2 || top3 === 3) {
-        mnem = ((op & (1<<20)) ? 'LDR' : 'STR') + cStr + ((op & (1<<22)) ? 'B' : '') + ' R' + ((op >>> 12) & 15) + ', [R' + ((op >>> 16) & 15) + ']';
-      } else if (top3 === 4) {
-        mnem = ((op & (1<<20)) ? 'LDM' : 'STM') + cStr + ' R' + ((op >>> 16) & 15) + ((op & (1<<21)) ? '!' : '') + ', {0x' + hex(op & 0xFFFF, 4) + '}';
-      } else if (top3 === 5) {
-        const target = (addr + 8 + ((op << 8) >> 6)) >>> 0;
-        mnem = ((op & (1<<24)) ? 'BL' : 'B') + cStr + ' 0x' + hex(target, 8);
-      } else if (top3 === 7 && (op & (1<<24))) {
-        mnem = 'SWI' + cStr + ' 0x' + hex((op >>> 16) & 0xFF, 2);
-      }
-      return hex(addr, 8) + ': ' + hex(op, 8) + '  ' + mnem;
+      if ((op & 0x0FFFFFF0) === 0x012FFF10) mnem = 'BX R' + (op & 0xF);
+      else if (top3 === 0 || top3 === 1) mnem = dpNames[(op >>> 21) & 0xF] + ' R' + ((op >>> 12) & 0xF);
+      else if (top3 === 2 || top3 === 3) mnem = ((op & (1 << 20)) ? 'LDR R' : 'STR R') + ((op >>> 12) & 0xF);
+      else if (top3 === 4) mnem = (op & (1 << 20)) ? 'LDM' : 'STM';
+      else if (top3 === 5) mnem = (op & (1 << 24)) ? 'BL' : 'B';
+      else if (top3 === 7) mnem = 'SWI 0x' + hex((op >>> 16) & 0xFF, 2);
+      res = `${hex(addr, 8)}: ${hex(op, 8)}  ${mnem}`;
     }
+    this.memCycles = savedMem;
+    return res;
   }
 }
 
@@ -4458,6 +5416,7 @@ async function runB1337SelfTest(buildPolyglotFn) {
       for (const k in initRegs) gba.r[k | 0] = initRegs[k] | 0;
     }
     gba.r[15] = 0x02000000;
+    gba.pipePc = -1;
     gba.ewram32[0] = instrWord >>> 0;
     gba.stepArm();
   }
@@ -4470,6 +5429,7 @@ async function runB1337SelfTest(buildPolyglotFn) {
       for (const k in initRegs) gba.r[k | 0] = initRegs[k] | 0;
     }
     gba.r[15] = 0x02000000;
+    gba.pipePc = -1;
     gba.ewram16[0] = instrHalf & 0xFFFF;
     gba.stepThumb();
   }
@@ -4814,6 +5774,7 @@ async function runB1337SelfTest(buildPolyglotFn) {
     // STMIA R0, {R13}^ -> 0xE8C02000
     gba.r[0] = 0x02000500;
     gba.r[15] = 0x02000000;
+    gba.pipePc = -1;
     gba.ewram32[0] = 0xE8C02000;
     gba.stepArm();
     gba.switchMode(MODE_SYS);
@@ -5025,6 +5986,7 @@ async function runB1337SelfTest(buildPolyglotFn) {
     // Format 19: BL +0x100 (0xF000 0xF880)
     gba.cpsr = MODE_SYS | FLAG_T;
     gba.r[15] = 0x02000000;
+    gba.pipePc = -1;
     gba.ewram16[0] = 0xF000;
     gba.ewram16[1] = 0xF880;
     gba.stepThumb();
@@ -5222,13 +6184,245 @@ async function runB1337SelfTest(buildPolyglotFn) {
     record('Polyglot Re-1337ify strips tail (idempotent, no recursion)', idempMatch, `Len=${rePolyBytes.length}`);
   }
 
+
+  // --------------------------------------------------------------------------
+  // 7. v1.1 Tier 1 & Tier 2 Verification Suite (Thumb 229, NES Pipeline, BIOS 3, Saves, WAITCNT, Audio)
+  // --------------------------------------------------------------------------
+  {
+    // 7.1 Thumb test 229: STMIA Rb!, {} (empty rlist = 0xC000) stores PC+6 and adds 0x40 to Rb!
+    gba.ewram32[0x800 >> 2] = 0;
+    runThumb1(0xC000, { 0: 0x02000800 }, 0); // STMIA R0!, {} at 0x02000000
+    record(
+      'Thumb test 229: STMIA R0!, {} empty rlist stores PC+6 & +0x40',
+      (gba.r[0] >>> 0) === 0x02000840 && (gba.ewram32[0x800 >> 2] >>> 0) === 0x02000006,
+      `[0x800]=${hex32(gba.ewram32[0x800 >> 2])} R0=${hex32(gba.r[0])}`
+    );
+
+    // Thumb PUSH {} (0xB400) empty rlist stores PC+6 at SP-0x40
+    gba.ewram32[(0x900 - 0x40) >> 2] = 0;
+    runThumb1(0xB400, { 13: 0x02000900 }, 0);
+    record(
+      'Thumb PUSH {} empty rlist stores PC+6 at SP-0x40',
+      (gba.r[13] >>> 0) === 0x020008C0 && (gba.ewram32[0x8C0 >> 2] >>> 0) === 0x02000006,
+      `[0x8C0]=${hex32(gba.ewram32[0x8C0 >> 2])}`
+    );
+
+    // 7.2 NES test 1: ARM 2-Stage Prefetch Pipeline (self-modifying code at PC+4)
+    // At 0x02000000: STR R0, [R1] (overwrites 0x02000004 with MOV R2, #99)
+    // At 0x02000004: MOV R2, #42 (already prefetched into pipeline!)
+    // At 0x02000008: B 0x02000004 (flushes pipeline and jumps back to 0x02000004!)
+    gba.cpsr = MODE_SYS;
+    gba.r[0] = 0xE3A02063; // MOV R2, #99
+    gba.r[1] = 0x02000004;
+    gba.r[2] = 0;
+    gba.r[15] = 0x02000000;
+    gba.pipePc = -1;
+    gba.ewram32[0] = 0xE5810000; // STR R0, [R1]
+    gba.ewram32[1] = 0xE3A0202A; // MOV R2, #42
+    gba.ewram32[2] = 0xEAFFFFFD; // B 0x02000004
+    gba.stepArm(); // Executes STR R0, [0x02000004]
+    gba.stepArm(); // Executes prefetched old instruction at 0x02000004 -> R2 must be 42!
+    const r2BeforeFlush = gba.r[2];
+    gba.stepArm(); // Executes B 0x02000004 -> flushes pipeline!
+    gba.stepArm(); // Executes newly fetched instruction at 0x02000004 -> R2 must be 99!
+    const r2AfterFlush = gba.r[2];
+    record(
+      'NES test 1 (ARM): Prefetch pipeline runs old opcode then flushes on branch',
+      r2BeforeFlush === 42 && r2AfterFlush === 99,
+      `beforeFlush=${r2BeforeFlush}, afterFlush=${r2AfterFlush}`
+    );
+
+    // NES test 1 (Thumb): Thumb 2-Stage Prefetch Pipeline (self-modifying code at PC+2)
+    gba.cpsr = MODE_SYS | FLAG_T;
+    gba.r[0] = 0x2263; // MOV R2, #99
+    gba.r[1] = 0x02000002;
+    gba.r[2] = 0;
+    gba.r[15] = 0x02000000;
+    gba.pipePc = -1;
+    gba.ewram16[0] = 0x8008; // STRH R0, [R1, #0]
+    gba.ewram16[1] = 0x222A; // MOV R2, #42
+    gba.ewram16[2] = 0xE7FD; // B 0x02000002
+    gba.stepThumb(); // Executes STRH R0, [0x02000002]
+    gba.stepThumb(); // Executes prefetched old instruction at 0x02000002 -> R2 must be 42!
+    const tr2Before = gba.r[2];
+    gba.stepThumb(); // Executes B 0x02000002 -> flushes pipeline!
+    gba.stepThumb(); // Executes newly fetched instruction at 0x02000002 -> R2 must be 99!
+    const tr2After = gba.r[2];
+    record(
+      'NES test 1 (Thumb): Prefetch pipeline runs old opcode then flushes on branch',
+      tr2Before === 42 && tr2After === 99,
+      `beforeFlush=${tr2Before}, afterFlush=${tr2After}`
+    );
+
+    // 7.3 BIOS test 3: Open-Bus BIOS Reads (Startup, SWI, During IRQ, After IRQ Return)
+    gba.reset();
+    const biosPostReset = gba.read32Aligned(0x00000000);
+    gba.r[0] = 10; gba.r[1] = 2;
+    gba.handleSwi(0x06); // Div
+    const biosPostSwi = gba.read32Aligned(0x00000000);
+
+    // Set up a tiny user ISR at 0x02000100 that reads BIOS open-bus [0x00000000] into R5 and returns via BX LR
+    // 0x02000100: MOV R0, #0          (0xE3A00000)
+    // 0x02000104: LDR R5, [R0]        (0xE5905000) -> reads BIOS open-bus DURING IRQ!
+    // 0x02000108: BX LR               (0xE12FFF1E) -> returns to BIOS 0x0138!
+    gba.ewram32[0x100 >> 2] = 0xE3A00000;
+    gba.ewram32[0x104 >> 2] = 0xE5905000;
+    gba.ewram32[0x108 >> 2] = 0xE12FFF1E;
+    gba.write32(0x03007FFC, 0x02000100);
+    // Main code at 0x08000000 (or 0x02000200): NOP
+    gba.ewram32[0x200 >> 2] = 0xE1A00000;
+    gba.ewram32[0x204 >> 2] = 0xE1A00000;
+    gba.r[15] = 0x02000200;
+    gba.pipePc = -1;
+    gba.io16[0x208 >> 1] = 1; // IME = 1
+    gba.io16[0x200 >> 1] = IRQ_VBLANK; // IE = VBlank
+    gba.io16[0x202 >> 1] = IRQ_VBLANK; // IF = VBlank
+    // Step through IRQ dispatch -> user ISR -> BIOS IRQ return:
+    // 1. stepInstruction triggers IRQ exception and executes 0x0018 (B 0x0128)
+    // 2..5. executes 0x0128, 0x012C, 0x0130, 0x0134 (jumps to 0x02000100)
+    // 6..8. executes 0x02000100, 0x02000104 (reads BIOS into R5), 0x02000108 (BX LR -> 0x0138)
+    // 9..10. executes 0x0138 (LDMIA), 0x013C (SUBS PC, LR, #4 -> returns to 0x02000200)
+    for (let step = 0; step < 10; step++) {
+      gba.stepInstruction();
+      // Clear IF after entering ISR so it doesn't re-trigger on return
+      if ((gba.r[15] >>> 0) === 0x02000100) gba.io16[0x202 >> 1] = 0;
+    }
+    const biosDuringIrq = gba.r[5] >>> 0;
+    const biosAfterIrq  = gba.read32Aligned(0x00000000) >>> 0;
+    record(
+      'BIOS test 1..3: Open-bus latch (Reset=0xE129F000, SWI=0xE3A02004, DuringIRQ=0xE25EF004, PostIRQ=0xE55EC002)',
+      biosPostReset === 0xE129F000 && biosPostSwi === 0xE3A02004 && biosDuringIrq === 0xE25EF004 && biosAfterIrq === 0xE55EC002,
+      `Reset=${hex32(biosPostReset)} SWI=${hex32(biosPostSwi)} DuringIRQ=${hex32(biosDuringIrq)} PostIRQ=${hex32(biosAfterIrq)}`
+    );
+
+    // 7.4 Save Memory: SRAM (0xFF init + mirrors across 0x0E000000-0x0FFFFFFF)
+    const fakeRom = new Uint8Array(256);
+    fakeRom[0xB2] = 0x96;
+    gba.loadRom(fakeRom); // No ID string -> AUTO (save/none & save/sram behavior)
+    const sramInitFF = (gba.read8(0x0E000000) === 0xFF) && (gba.read8(0x0E007FFF) === 0xFF) && (gba.read8(0x0F000000) === 0xFF);
+    gba.write8(0x0E000042, 0xA5);
+    const sramMirrorsOk = (gba.read8(0x0E000042) === 0xA5) && (gba.read8(0x0E008042) === 0xA5) && (gba.read8(0x0F000042) === 0xA5);
+    record('Save SRAM & NONE: Erased 0xFF init & 32KB mirrors across 0x0E000000-0x0FFFFFFF', sramInitFF && sramMirrorsOk, 'OK');
+
+    // 7.5 Save Memory: Flash 64 KB (Macronix 0x1CC2, Chip ID, Byte Program, Sector Erase, Chip Erase)
+    gba.sram.fill(0xFF);
+    gba.flash.fill(0xFF);
+    gba.setSaveType('FLASH64');
+    const f64InitFF = (gba.read8(0x0E000000) === 0xFF);
+    // Enter Chip ID mode: AA->5555, 55->2AAA, 90->5555
+    gba.write8(0x0E005555, 0xAA); gba.write8(0x0E002AAA, 0x55); gba.write8(0x0E005555, 0x90);
+    const f64Id = gba.read8(0x0E000000) | (gba.read8(0x0E000001) << 8);
+    // Exit Chip ID mode: AA->5555, 55->2AAA, F0->5555
+    gba.write8(0x0E005555, 0xAA); gba.write8(0x0E002AAA, 0x55); gba.write8(0x0E005555, 0xF0);
+    // Byte Write 0x37 to 0x0E001234 and 0x99 to 0x0E002345
+    gba.write8(0x0E005555, 0xAA); gba.write8(0x0E002AAA, 0x55); gba.write8(0x0E005555, 0xA0);
+    gba.write8(0x0E001234, 0x37);
+    gba.write8(0x0E005555, 0xAA); gba.write8(0x0E002AAA, 0x55); gba.write8(0x0E005555, 0xA0);
+    gba.write8(0x0E002345, 0x99);
+    const f64WriteOk = (gba.read8(0x0E001234) === 0x37) && (gba.read8(0x0F001234) === 0x37) && (gba.read8(0x0E002345) === 0x99);
+    // 4 KB Sector Erase of sector 0x1000 (should erase 0x1234 to 0xFF but leave 0x2345 as 0x99!)
+    gba.write8(0x0E005555, 0xAA); gba.write8(0x0E002AAA, 0x55); gba.write8(0x0E005555, 0x80);
+    gba.write8(0x0E005555, 0xAA); gba.write8(0x0E002AAA, 0x55); gba.write8(0x0E001000, 0x30);
+    const f64SecEraseOk = (gba.read8(0x0E001234) === 0xFF) && (gba.read8(0x0E002345) === 0x99);
+    // Chip Erase (0x80 -> 0x10)
+    gba.write8(0x0E005555, 0xAA); gba.write8(0x0E002AAA, 0x55); gba.write8(0x0E005555, 0x80);
+    gba.write8(0x0E005555, 0xAA); gba.write8(0x0E002AAA, 0x55); gba.write8(0x0E005555, 0x10);
+    const f64ChipEraseOk = (gba.read8(0x0E002345) === 0xFF);
+    record(
+      'Save Flash 64KB (Macronix 0x1CC2): ID, Byte Write, 4KB Sector Erase & Chip Erase',
+      f64InitFF && f64Id === 0x1CC2 && f64WriteOk && f64SecEraseOk && f64ChipEraseOk,
+      `ID=0x${f64Id.toString(16).toUpperCase()}`
+    );
+
+    // 7.6 Save Memory: Flash 128 KB (Sanyo 0x1362 + Bank Switching 0xB0)
+    gba.flash.fill(0xFF);
+    gba.setSaveType('FLASH128');
+    gba.write8(0x0E005555, 0xAA); gba.write8(0x0E002AAA, 0x55); gba.write8(0x0E005555, 0x90);
+    const f128Id = gba.read8(0x0E000000) | (gba.read8(0x0E000001) << 8);
+    gba.write8(0x0E005555, 0xAA); gba.write8(0x0E002AAA, 0x55); gba.write8(0x0E005555, 0xF0);
+    // Select Bank 0 and write 0x11 at 0x0E000100
+    gba.write8(0x0E005555, 0xAA); gba.write8(0x0E002AAA, 0x55); gba.write8(0x0E005555, 0xB0); gba.write8(0x0E000000, 0);
+    gba.write8(0x0E005555, 0xAA); gba.write8(0x0E002AAA, 0x55); gba.write8(0x0E005555, 0xA0); gba.write8(0x0E000100, 0x11);
+    // Select Bank 1 and write 0x22 at 0x0E000100
+    gba.write8(0x0E005555, 0xAA); gba.write8(0x0E002AAA, 0x55); gba.write8(0x0E005555, 0xB0); gba.write8(0x0E000000, 1);
+    const bank1Erased = (gba.read8(0x0E000100) === 0xFF);
+    gba.write8(0x0E005555, 0xAA); gba.write8(0x0E002AAA, 0x55); gba.write8(0x0E005555, 0xA0); gba.write8(0x0E000100, 0x22);
+    const bank1Val = gba.read8(0x0E000100);
+    // Switch back to Bank 0 and verify 0x11 is intact
+    gba.write8(0x0E005555, 0xAA); gba.write8(0x0E002AAA, 0x55); gba.write8(0x0E005555, 0xB0); gba.write8(0x0E000000, 0);
+    const bank0Val = gba.read8(0x0E000100);
+    record(
+      'Save Flash 128KB (Sanyo 0x1362): ID & Bank 0/1 Switching (0xB0)',
+      f128Id === 0x1362 && bank1Erased && bank1Val === 0x22 && bank0Val === 0x11,
+      `ID=0x${f128Id.toString(16).toUpperCase()} B0=0x${bank0Val.toString(16)} B1=0x${bank1Val.toString(16)}`
+    );
+
+    // 7.7 Save Memory: EEPROM 512B (6-bit addr, 73-bit write / 9-bit read) & 8KB (14-bit addr) via DMA3
+    gba.eeprom.fill(0xFF);
+    gba.setSaveType('EEPROM512');
+    // Build a 73-halfword Write Request in EWRAM at 0x02004000 for block 0x15 = 0x1337CAFEBABE1234
+    const writeBits = [1, 0, 0,1,0,1,0,1]; // cmd=10 (write), addr=0x15 (6 bits: 010101)
+    const testBytes = [0x13, 0x37, 0xCA, 0xFE, 0xBA, 0xBE, 0x12, 0x34];
+    for (const b of testBytes) {
+      for (let bit = 7; bit >= 0; bit--) writeBits.push((b >>> bit) & 1);
+    }
+    writeBits.push(0); // stop bit (total = 73 bits)
+    for (let i = 0; i < writeBits.length; i++) gba.write16(0x02004000 + i * 2, writeBits[i]);
+    // Trigger DMA3: src=0x02004000, dst=0x0D000000, count=73, cnt=0x8000 (16-bit immediate)
+    gba.write32(0x040000D4, 0x02004000);
+    gba.write32(0x040000D8, 0x0D000000);
+    gba.write16(0x040000DC, 73);
+    gba.write16(0x040000DE, 0x8000);
+    // Poll ready bit at 0x0D000000
+    const eepromReady = (gba.read16(0x0D000000) & 1) === 1;
+    // Send 9-halfword Read Request for block 0x15: [1, 1, 0,1,0,1,0,1, 0]
+    const readReqBits = [1, 1, 0,1,0,1,0,1, 0];
+    for (let i = 0; i < readReqBits.length; i++) gba.write16(0x02004200 + i * 2, readReqBits[i]);
+    gba.write32(0x040000D4, 0x02004200);
+    gba.write32(0x040000D8, 0x0D000000);
+    gba.write16(0x040000DC, 9);
+    gba.write16(0x040000DE, 0x8000);
+    // Read 68 halfwords from 0x0D000000 into 0x02004400
+    gba.write32(0x040000D4, 0x0D000000);
+    gba.write32(0x040000D8, 0x02004400);
+    gba.write16(0x040000DC, 68);
+    gba.write16(0x040000DE, 0x8000);
+    // Reconstruct the 8 bytes from bits 4..67
+    let eepromMatch = eepromReady;
+    for (let b = 0; b < 8; b++) {
+      let got = 0;
+      for (let bit = 0; bit < 8; bit++) {
+        got = (got << 1) | (gba.read16(0x02004400 + (4 + b * 8 + bit) * 2) & 1);
+      }
+      if (got !== testBytes[b]) eepromMatch = false;
+    }
+    record('Save EEPROM (DMA3 @ 0x0D000000): Bitstream Write, Ready Bit & 68-bit Read', eepromMatch, 'OK');
+
+    // 7.8 WAITCNT Cycle Timing & Prefetch Buffer Verification
+    gba.setSaveType('AUTO');
+    gba.write16(0x04000204, 0x0000); // Default WAITCNT (WS0 = 4,2 -> 16-bit N=5, S=3; 32-bit N=8, S=6)
+    const wsDefaultOk = (gba.ws16N[0x8] === 5 && gba.ws16S[0x8] === 3 && gba.ws32N[0x8] === 8 && gba.ws32S[0x8] === 6 && gba.ws16N[0x2] === 3 && gba.ws32N[0x2] === 6 && gba.ws32N[0x3] === 1);
+    gba.write16(0x04000204, 0x4317); // Fast WAITCNT (WS0 = 3,1 + Prefetch -> 16-bit N=4, S=2; 32-bit N=6, S=4)
+    const wsFastOk = (gba.ws16N[0x8] === 4 && gba.ws16S[0x8] === 2 && gba.ws32N[0x8] === 6 && gba.ws32S[0x8] === 4 && gba.prefetchEnabled === true);
+    record('Timing WAITCNT (0x04000204): N/S Waitstate Tables & Prefetch Enable', wsDefaultOk && wsFastOk, 'OK');
+
+    // 7.9 PSG Channel 3 Wave RAM Bank Select & Opposite-Bank CPU Access
+    gba.write16(0x04000084, 0x0080); // Master sound on
+    gba.write16(0x04000070, 0x0000); // Playing Bank 0 -> CPU accesses Bank 1!
+    gba.write8(0x04000090, 0xAB);
+    gba.write16(0x04000070, 0x0040); // Playing Bank 1 -> CPU accesses Bank 0!
+    gba.write8(0x04000090, 0xCD);
+    const waveBankIsolation = (gba.read8(0x04000090) === 0xCD && gba.waveRam[16] === 0xAB && gba.waveRam[0] === 0xCD);
+    record('Audio PSG Channel 3: Wave RAM Dual-Bank CPU/Playback Isolation', waveBankIsolation, 'OK');
+  }
+
   gba.close();
   return { passed, failed, results };
 }
 
 
 // ============================================================================
-// Pristine Template Capture, Polyglot Builder, Audio Output, UI & Window Hooks
+// Pristine Template Capture, Polyglot Builder, AudioWorklet Driver, UI & Hooks
 // ============================================================================
 
 const DEMO_BOOT_ROM_B64 = "LgAA6iT/rlFpmqIhPYSCCoTkCa0RJIuYwIF/IaNSvhmTCc4gEEZKSvgnMexYx+gzguPOv4X035TOSwnBlFaKwBNyp/yfhE1zo8qaYViXoyf8A5h2Ix3HYQMErla/OIQAQKcO/f9S/gNvlTDxl/vAhWDWgCWpY74DAU444vmiNP+7PgNEeACQy4gROpRlwHxjh/A8r9Yl5Is4CqxyIdT4BzEzMzdCT09UICAgIEIxM0VDTpYAAAAAAAAAAAABUgAAfNKf5QEDoOMBG6DjAxCB47AQwOEGBKDjaBKf5ZYsoOOyEMDgASBS4vz//xoKAKDjCBCg49wgoOMWMKDjSEKf5VoAAOsKAKDjRBCg49wgoOMmMKDjNEKf5VQAAOscAKDjDxCg45Evj+IkMp/ldwAA6ygAoOMkEKDjki+P4hQyn+VyAADrGACg4zIQoOOTL4/iBDKf5W0AAOsUAKDjShCg45Uvj+L0MZ/laAAA6xQAoONaEKDjli+P4tgxn+VjAADrAgOg4+ARn+UAIODj1DGf5QFA0OQEICLgCFCg46IgsOEDICIgAVBV4vv//xoBAFDh9v//OgBA4OMEYCLgAwSg4wBggOUccKDjdICg4zZHoOEPQATiCgBU4zBAhDI3QIQiCACg4VoQoOMEIKDhaDGf5SwAAOsIgIjiBHBX4vL//1oUAKDjdhCg43Uvj+JAMZ/lPgAA6xQAoOOGEKDjdi+P4jwxn+U5AADrAJCg4wEDoOO2ENDhoABR4/z//xqwI9DhAZCJ4goAoOOUEKDj3CCg4wQwoOOJQongBAAA6wEDoOO2ENDhoABR4/z//wru///q4EEt6QZUoOPwYKDjkQYH4ABwh+CHcIXgAoCg4bJAx+ABgFji/P//GgEQgeIBMFPi9f//GuCBvejwRy3pIEBC4ldfj+KEUYXgAGCg4wakoOMBcNXkAICg44CQoOM5mKDhCQAX4QYAAAoGQIHg8JCg45QJBOAAQITgCECE4IRAiuCwMMThAYCI4ggAWOPx//86AWCG4ggAVuPs//868Ie96HBALekAQKDhAVCg4QJgoOEBINbkAABS4wQAAAoEAKDhBRCg4dv//+sIQITi9///6nCAvegAfwADYiAAAEhAAADhLAAA5H8AAH8TAADmKwAA/38AAB9xAAAgg7jt8AUACDEzMzdCT1kgQ09MT1IgQURWQU5DRQAAAENPTlNDSU9VU05PREUgLyBYSU5VAAAAAFNFTEYtSE9TVEVEIFBPTFlHTE9UIFJPTQAAAABST006IDA4MDAwMDAwIChRVUlORSkAAABTRUxGIENSQzMyOiAAAAAASFcgPT0gTUdCQSA9PSAxMzM3Qk9ZAAAARVZFUlkgQ0FSVCBJUyBBIENPTlNPTEUAAAAAAAAAAAAYGBgYGAAYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwYMDAwGAwAMBgMDAwYMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAGBgABgwYMGBAAAA8Zm52ZmY8ABg4GBgYGH4APGYGHDBmfgA8ZgYcBmY8AAwcPGx+DAwAfmB8BgZmPAA8YHxmZmY8AH5mBgwYGBgAPGZmPGZmPAA8ZmY+Bgw4AAAYGAAYGAAAAAAAAAAAAAAAAAAAAAAAAAAAfgB+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGDxmZn5mZgB8ZmZ8ZmZ8ADxmYGBgZjwAeGxmZmZseAB+YGB8YGB+AH5gYHxgYGAAPGZgbmZmPgBmZmZ+ZmZmADwYGBgYGDwAHgwMDGxsOABmbHhweGxmAGBgYGBgYH4AY3d/a2NjYwBmdn5+bmZmADxmZmZmZjwAfGZmfGBgYAA8ZmZmamw2AHxmZnxsZmYAPGZgPAZmPAB+GBgYGBgYAGZmZmZmZjwAZmZmZmY8GABjY2Nrf3djAGZmPBg8ZmYAZmZmPBgYGAB+BgwYMGB+AAAAAAA=";
@@ -5267,7 +6461,7 @@ function scanRomForHtmlTokens(romBytes) {
     if (romBytes[i] === 0x3C) { // '<'
       const next = (i + 1 < romBytes.length) ? romBytes[i + 1] : 0;
       const isLetter = (next >= 0x41 && next <= 0x5A) || (next >= 0x61 && next <= 0x7A);
-      const isSpecial = (next === 0x21 || next === 0x2F || next === 0x3F); // '!', '/', '?'
+      const isSpecial = (next === 0x21 || next === 0x2F || next === 0x3F);
       if (isLetter || isSpecial) {
         let snippet = '';
         for (let k = 0; k < 12 && (i + k) < romBytes.length; k++) {
@@ -5348,13 +6542,15 @@ function buildPolyglotCartridge(inputBytes) {
   return out;
 }
 
-// Web Audio Driver (AudioWorklet from inline Blob with ScriptProcessor fallback)
+// Web Audio Driver: AudioWorklet from inline Blob URL with automatic ScriptProcessorNode fallback
 class B1337AudioDriver {
   constructor(gba) {
     this.gba = gba;
     this.ctx = null;
     this.muted = false;
     this.started = false;
+    this.mode = 'none';
+    this.workletNode = null;
   }
 
   startOnGesture() {
@@ -5370,28 +6566,107 @@ class B1337AudioDriver {
       if (!AudioCtx) return;
       this.ctx = new AudioCtx({ sampleRate: 27240 });
 
-      // Use ScriptProcessorNode (universally supported without cross-origin worklet restrictions in file:// and CSP)
-      // or AudioWorklet when Blob worker-src is permitted
-      if (this.ctx.createScriptProcessor) {
-        const node = this.ctx.createScriptProcessor(1024, 0, 2);
-        node.onaudioprocess = (ev) => {
-          const outL = ev.outputBuffer.getChannelData(0);
-          const outR = ev.outputBuffer.getChannelData(1);
-          for (let i = 0; i < outL.length; i++) {
-            if (this.muted || this.gba.audioReadPos === this.gba.audioWritePos) {
-              outL[i] = 0;
-              outR[i] = 0;
-            } else {
-              outL[i] = this.gba.audioRingL[this.gba.audioReadPos];
-              outR[i] = this.gba.audioRingR[this.gba.audioReadPos];
-              this.gba.audioReadPos = (this.gba.audioReadPos + 1) & 8191;
+      if (this.ctx.audioWorklet && typeof Blob !== 'undefined' && typeof URL !== 'undefined') {
+        const workletCode = `
+          class B1337WorkletProcessor extends AudioWorkletProcessor {
+            constructor() {
+              super();
+              this.ringL = new Float32Array(8192);
+              this.ringR = new Float32Array(8192);
+              this.rPos = 0;
+              this.wPos = 0;
+              this.port.onmessage = (ev) => {
+                const d = ev.data;
+                if (!d || !d.l) return;
+                const l = d.l, r = d.r;
+                for (let i = 0; i < l.length; i++) {
+                  const next = (this.wPos + 1) & 8191;
+                  if (next !== this.rPos) {
+                    this.ringL[this.wPos] = l[i];
+                    this.ringR[this.wPos] = r[i];
+                    this.wPos = next;
+                  }
+                }
+              };
+            }
+            process(inputs, outputs) {
+              const out = outputs[0];
+              if (!out || out.length < 2) return true;
+              const outL = out[0], outR = out[1];
+              for (let i = 0; i < outL.length; i++) {
+                if (this.rPos === this.wPos) {
+                  outL[i] = 0; outR[i] = 0;
+                } else {
+                  outL[i] = this.ringL[this.rPos];
+                  outR[i] = this.ringR[this.rPos];
+                  this.rPos = (this.rPos + 1) & 8191;
+                }
+              }
+              return true;
             }
           }
-        };
-        node.connect(this.ctx.destination);
-        this.node = node;
+          registerProcessor('b1337-audio-worklet', B1337WorkletProcessor);
+        `;
+        const blob = new Blob([workletCode], { type: 'application/javascript' });
+        const url = URL.createObjectURL(blob);
+        this.ctx.audioWorklet.addModule(url).then(() => {
+          URL.revokeObjectURL(url);
+          const wn = new AudioWorkletNode(this.ctx, 'b1337-audio-worklet', { numberOfInputs: 0, numberOfOutputs: 1, outputChannelCount: [2] });
+          wn.connect(this.ctx.destination);
+          this.workletNode = wn;
+          this.mode = 'AudioWorklet';
+        }).catch(() => {
+          URL.revokeObjectURL(url);
+          this.initScriptProcessorFallback();
+        });
+      } else {
+        this.initScriptProcessorFallback();
       }
+    } catch (e) {
+      this.initScriptProcessorFallback();
+    }
+  }
+
+  initScriptProcessorFallback() {
+    try {
+      if (!this.ctx || !this.ctx.createScriptProcessor || this.node) return;
+      const node = this.ctx.createScriptProcessor(1024, 0, 2);
+      node.onaudioprocess = (ev) => {
+        const outL = ev.outputBuffer.getChannelData(0);
+        const outR = ev.outputBuffer.getChannelData(1);
+        for (let i = 0; i < outL.length; i++) {
+          if (this.muted || this.gba.audioReadPos === this.gba.audioWritePos) {
+            outL[i] = 0;
+            outR[i] = 0;
+          } else {
+            outL[i] = this.gba.audioRingL[this.gba.audioReadPos];
+            outR[i] = this.gba.audioRingR[this.gba.audioReadPos];
+            this.gba.audioReadPos = (this.gba.audioReadPos + 1) & 8191;
+          }
+        }
+      };
+      node.connect(this.ctx.destination);
+      this.node = node;
+      this.mode = 'ScriptProcessor';
     } catch (e) {}
+  }
+
+  pumpWorkletSamples() {
+    if (!this.workletNode) return;
+    if (this.muted) {
+      this.gba.audioReadPos = this.gba.audioWritePos;
+      return;
+    }
+    const avail = (this.gba.audioWritePos - this.gba.audioReadPos) & 8191;
+    if (avail === 0) return;
+    const batchL = new Float32Array(avail);
+    const batchR = new Float32Array(avail);
+    for (let i = 0; i < avail; i++) {
+      batchL[i] = this.gba.audioRingL[this.gba.audioReadPos];
+      batchR[i] = this.gba.audioRingR[this.gba.audioReadPos];
+      this.gba.audioReadPos = (this.gba.audioReadPos + 1) & 8191;
+    }
+    this.workletNode.port.postMessage({ l: batchL, r: batchR }, [batchL.buffer, batchR.buffer]);
   }
 
   toggleMute() {
@@ -5399,6 +6674,54 @@ class B1337AudioDriver {
     return this.muted;
   }
 }
+
+// IndexedDB Recent ROMs Library Helper
+const B1337LibraryDB = {
+  open() {
+    return new Promise((resolve, reject) => {
+      if (typeof indexedDB === 'undefined') return reject(new Error('No IndexedDB'));
+      const req = indexedDB.open('1337boy_library_db', 1);
+      req.onupgradeneeded = (ev) => {
+        const db = ev.target.result;
+        if (!db.objectStoreNames.contains('roms')) {
+          db.createObjectStore('roms', { keyPath: 'crc32' });
+        }
+      };
+      req.onsuccess = (ev) => resolve(ev.target.result);
+      req.onerror = () => reject(req.error);
+    });
+  },
+  async saveRom(crc32, title, code, bytes) {
+    try {
+      const db = await this.open();
+      const tx = db.transaction('roms', 'readwrite');
+      tx.objectStore('roms').put({
+        crc32: crc32 >>> 0,
+        title: title || 'UNTITLED',
+        code: code || '----',
+        size: bytes.length,
+        timestamp: Date.now(),
+        bytes: new Uint8Array(bytes)
+      });
+    } catch (e) {}
+  },
+  async listRoms() {
+    try {
+      const db = await this.open();
+      return await new Promise((resolve) => {
+        const tx = db.transaction('roms', 'readonly');
+        const req = tx.objectStore('roms').getAll();
+        req.onsuccess = () => {
+          const list = (req.result || []).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+          resolve(list.slice(0, 8));
+        };
+        req.onerror = () => resolve([]);
+      });
+    } catch (e) {
+      return [];
+    }
+  }
+};
 
 // ============================================================================
 // Main Application & UI Controller
@@ -5408,16 +6731,12 @@ function initB1337App() {
   capturePristineSources();
   enforceZeroNetworkCSP();
 
-  // Read embedded base64 ROM before wiping body!
   const b64El = document.getElementById('b1337-rom-b64');
   const embeddedRomB64 = b64El ? b64El.textContent.trim() : '';
 
-  // Wipe document.body completely to purge any stray binary prefix text nodes / broken tags!
   while (document.body.firstChild) {
     document.body.removeChild(document.body.firstChild);
   }
-  // Re-attach pristine <style id="b1337-style">, <script id="b1337-rom-b64">, <script id="b1337-core"> hidden
-  // so inspectability and re-1337ification always have the exact tags if needed
   if (!document.getElementById('b1337-style')) {
     const st = document.createElement('style');
     st.id = 'b1337-style';
@@ -5430,10 +6749,24 @@ function initB1337App() {
 
   let running = false;
   let paused = false;
-  let fastForward = false;
+  let realtimeEnabled = true; // Controlled by window.B1337.setRealtime(bool)
+  let speedMult = 1.0;        // 0.25, 0.5, 1, 2, 4, 8
+  let slowTickAccum = 0;
+  let fastForwardTab = false;
+  let rewinding = false;
   let showFps = true;
   let debugOpen = false;
   let hasCartridge = false;
+  let intScale = false;
+  let lcdGrid  = false;
+
+  // Rewind circular ring buffer (up to 60 snapshots, captured every 15 frames = 15s history)
+  const rewindRing = [];
+  const REWIND_MAX = 60;
+  let rewindFrameTick = 0;
+
+  // 4 Save-State Slots in memory + localStorage per ROM
+  const stateSlots = [null, null, null, null];
 
   // Build fresh UI DOM
   const app = document.createElement('div');
@@ -5442,11 +6775,12 @@ function initB1337App() {
     <header class="b1337-banner">
       <div class="b1337-brand">
         <span class="b1337-logo">1337Boy&trade; COLOR ADVANCE TURBO</span>
-        <span class="b1337-tagline">999,999 GAMES IN 1! &bull; EVERY CARTRIDGE IS A CONSOLE</span>
+        <span class="b1337-tagline">v1.1 &bull; 999,999 GAMES IN 1! &bull; EVERY CARTRIDGE IS A CONSOLE</span>
       </div>
       <div class="b1337-badges">
         <span class="b1337-badge gold" id="ui-cart-badge">NO CART</span>
         <span class="b1337-badge lime" id="ui-crc-badge">CRC32: --------</span>
+        <span class="b1337-badge" id="ui-save-badge">SAVE: AUTO</span>
         <span class="b1337-badge" id="ui-link-badge">LINK: STANDBY</span>
       </div>
     </header>
@@ -5457,11 +6791,27 @@ function initB1337App() {
       <button class="b1337-btn gold" id="btn-1337ify">1337IFY! (EXPORT POLYGLOT)</button>
       <button class="b1337-btn" id="btn-selftest">SELF-TEST</button>
       <button class="b1337-btn" id="btn-pause">PAUSE / INFO</button>
-      <button class="b1337-btn" id="btn-debugger">DEBUG (\`)</button>
-      <button class="b1337-btn" id="btn-savestate">SAVE .1337STATE</button>
-      <button class="b1337-btn" id="btn-loadstate">LOAD STATE</button>
+      <button class="b1337-btn" id="btn-step-frame" title="Step 1 Frame (Key: N)">+1 FRAME</button>
+      <select class="b1337-select" id="sel-speed" title="Emulation Speed">
+        <option value="0.25">SPEED: 0.25x</option>
+        <option value="0.5">SPEED: 0.5x</option>
+        <option value="1" selected>SPEED: 1x</option>
+        <option value="2">SPEED: 2x</option>
+        <option value="4">SPEED: 4x</option>
+        <option value="8">SPEED: 8x</option>
+      </select>
+      <button class="b1337-btn" id="btn-rewind" title="Hold to Rewind (Key: R)">REWIND</button>
+      <button class="b1337-btn" id="btn-slots">STATES (F1-F4)</button>
       <button class="b1337-btn" id="btn-savesav">SAVE .SAV</button>
       <button class="b1337-btn" id="btn-loadsav">LOAD .SAV</button>
+      <button class="b1337-btn" id="btn-snap" title="Save PNG Screenshot">SNAP PNG</button>
+      <button class="b1337-btn" id="btn-intscale">INT SCALE</button>
+      <button class="b1337-btn" id="btn-lcdgrid">LCD GRID</button>
+      <button class="b1337-btn" id="btn-colorcorr">GBA COLOR</button>
+      <button class="b1337-btn" id="btn-fullscreen">FULLSCREEN</button>
+      <button class="b1337-btn" id="btn-remap">CONTROLS</button>
+      <button class="b1337-btn" id="btn-cheats">CHEATS</button>
+      <button class="b1337-btn" id="btn-debugger">DEBUG (\`)</button>
       <button class="b1337-btn" id="btn-fps">FPS: ON</button>
       <button class="b1337-btn" id="btn-mute">AUDIO: ON</button>
       <button class="b1337-btn" id="btn-about">ABOUT</button>
@@ -5471,7 +6821,7 @@ function initB1337App() {
     </nav>
 
     <div class="b1337-main" id="ui-main-grid">
-      <section class="b1337-console">
+      <section class="b1337-console" id="ui-console-shell">
         <div class="b1337-bezel">
           <div class="b1337-bezel-top">
             <span class="b1337-power-led"><span class="b1337-led-dot" id="ui-power-dot"></span> <span id="ui-status-txt">READY</span></span>
@@ -5481,6 +6831,7 @@ function initB1337App() {
 
           <div class="b1337-screen-wrap" id="ui-screen-wrap">
             <canvas id="b1337-canvas" width="240" height="160"></canvas>
+            <div class="b1337-lcd-grid hidden" id="ui-lcd-grid"></div>
             <div class="b1337-dropzone" id="ui-dropzone">
               <div class="b1337-drop-title">INSERT CARTRIDGE (.GBA)</div>
               <div class="b1337-drop-sub">
@@ -5491,6 +6842,7 @@ function initB1337App() {
                 <button class="b1337-btn lime" id="btn-drop-demo">PLAY "1337 BOOT" QUINE DEMO</button>
                 <button class="b1337-btn gold" id="btn-drop-selftest">RUN HARDWARE SELF-TEST</button>
               </div>
+              <div class="b1337-recent-bar" id="ui-recent-roms"></div>
             </div>
           </div>
         </div>
@@ -5498,6 +6850,7 @@ function initB1337App() {
         <div class="b1337-deck" id="ui-touch-deck">
           <div class="b1337-shoulders">
             <button class="b1337-pad-btn b1337-shoulder" data-gba-key="9">L (A)</button>
+            <button class="b1337-pad-btn b1337-pill-btn" id="btn-touch-rewind" style="font-size:0.65rem;">&laquo; REW</button>
             <button class="b1337-pad-btn b1337-shoulder" data-gba-key="8">R (S)</button>
           </div>
           <div class="b1337-controls-row">
@@ -5525,9 +6878,9 @@ function initB1337App() {
           </div>
         </div>
 
-        <div class="b1337-keybar">
-          <span><b>D-PAD:</b> Arrows &bull; <b>A:</b> X &bull; <b>B:</b> Z &bull; <b>L:</b> A &bull; <b>R:</b> S &bull; <b>START:</b> Enter &bull; <b>SELECT:</b> Backspace/Shift</span>
-          <span><b>FAST-FORWARD:</b> Hold Tab &bull; <b>DEBUGGER:</b> Backquote (\`)</span>
+        <div class="b1337-keybar" id="ui-keybar-legend">
+          <span><b>D-PAD:</b> Arrows &bull; <b>A:</b> X &bull; <b>B:</b> Z &bull; <b>L:</b> A &bull; <b>R:</b> S &bull; <b>START:</b> Enter &bull; <b>SELECT:</b> Backspace/Shift &bull; <b>GAMEPAD:</b> Auto</span>
+          <span><b>TURBO:</b> Tab &bull; <b>REWIND:</b> R &bull; <b>SLOTS:</b> F1-F4 &bull; <b>DEBUG:</b> \`</span>
         </div>
       </section>
 
@@ -5545,20 +6898,86 @@ function initB1337App() {
       </aside>
     </div>
 
-    <!-- Pause & Cartridge Header Modal -->
+    <!-- Pause & Cartridge Header + Save Type Override Modal -->
     <div class="b1337-modal-backdrop hidden" id="modal-pause">
       <div class="b1337-modal">
         <div class="b1337-modal-head">
-          <span>CARTRIDGE HEADER &amp; PAUSE DECK</span>
+          <span>CARTRIDGE HEADER, SAVE TYPE &amp; PAUSE DECK</span>
           <button class="b1337-btn" id="btn-close-pause">RESUME</button>
         </div>
         <div class="b1337-modal-body">
           <table class="b1337-kv-table" id="ui-header-table"></table>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <label style="color:var(--gold);font-weight:700;">Save Memory Type Override:</label>
+            <select class="b1337-select" id="sel-savetype">
+              <option value="AUTO">AUTO-DETECT (ROM ID / Heuristic)</option>
+              <option value="SRAM">SRAM 32 KB (0x0E000000)</option>
+              <option value="FLASH64">FLASH 64 KB (Macronix 0x1CC2)</option>
+              <option value="FLASH128">FLASH 128 KB (Sanyo 0x1362, 2 Banks)</option>
+              <option value="EEPROM512">EEPROM 512 B (6-bit DMA3)</option>
+              <option value="EEPROM8K">EEPROM 8 KB (14-bit DMA3)</option>
+              <option value="NONE">NONE (No Battery Backup)</option>
+            </select>
+          </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="b1337-btn gold" id="btn-modal-dl-gba">DOWNLOAD .1337.GBA</button>
             <button class="b1337-btn primary" id="btn-modal-dl-html">DOWNLOAD .1337.HTML</button>
             <button class="b1337-btn" id="btn-modal-reset">COLD RESET</button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4 Save-State Slots Modal -->
+    <div class="b1337-modal-backdrop hidden" id="modal-slots">
+      <div class="b1337-modal">
+        <div class="b1337-modal-head">
+          <span>SAVE-STATE SLOTS (SHIFT+F1..F4 SAVE / F1..F4 LOAD)</span>
+          <button class="b1337-btn" id="btn-close-slots">CLOSE</button>
+        </div>
+        <div class="b1337-modal-body">
+          <div class="b1337-slot-grid" id="ui-slot-grid"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;padding-top:6px;border-top:1px solid #23294a;">
+            <button class="b1337-btn primary" id="btn-savestate">EXPORT .1337STATE FILE</button>
+            <button class="b1337-btn" id="btn-loadstate">IMPORT .1337STATE FILE</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls & Gamepad Remapping Modal -->
+    <div class="b1337-modal-backdrop hidden" id="modal-remap">
+      <div class="b1337-modal">
+        <div class="b1337-modal-head">
+          <span>KEYBOARD &amp; GAMEPAD REMAPPING</span>
+          <button class="b1337-btn" id="btn-close-remap">CLOSE</button>
+        </div>
+        <div class="b1337-modal-body">
+          <p>Click any GBA button below and press a keyboard key or physical USB/Bluetooth gamepad button to bind it. Bookings persist in <code>localStorage</code>.</p>
+          <table class="b1337-kv-table" id="ui-remap-table"></table>
+          <div style="display:flex;gap:8px;">
+            <button class="b1337-btn gold" id="btn-reset-remap">RESET DEFAULT KEYS</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cheats Manager Modal -->
+    <div class="b1337-modal-backdrop hidden" id="modal-cheats">
+      <div class="b1337-modal">
+        <div class="b1337-modal-head">
+          <span>MEMORY CHEATS ENGINE (RAW ADDR:VAL &amp; CODEBREAKER)</span>
+          <button class="b1337-btn" id="btn-close-cheats">CLOSE</button>
+        </div>
+        <div class="b1337-modal-body">
+          <p>Enter a raw patch (e.g. <code>02000100:63</code> or <code>03000040:03E7</code>) or CodeBreaker code (<code>3xxxxxxx 00yy</code> / <code>8xxxxxxx yyyy</code>):</p>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <input type="text" class="b1337-input" id="inp-cheat-code" placeholder="02000000:FF or 82000000 03E7" style="flex:1;">
+            <input type="text" class="b1337-input" id="inp-cheat-desc" placeholder="Label (optional)" style="width:160px;">
+            <button class="b1337-btn lime" id="btn-add-cheat">ADD CHEAT</button>
+            <button class="b1337-btn" id="btn-clear-cheats">CLEAR ALL</button>
+          </div>
+          <div class="b1337-test-list" id="ui-cheat-list">No active cheats.</div>
         </div>
       </div>
     </div>
@@ -5581,7 +7000,7 @@ function initB1337App() {
     <div class="b1337-modal-backdrop hidden" id="modal-about">
       <div class="b1337-modal">
         <div class="b1337-modal-head">
-          <span>ABOUT 1337Boy&trade; // PRIOR ART &amp; XINU PHILOSOPHY</span>
+          <span>ABOUT 1337Boy&trade; v1.1 // PRIOR ART &amp; XINU PHILOSOPHY</span>
           <button class="b1337-btn" id="btn-close-about">CLOSE</button>
         </div>
         <div class="b1337-modal-body">
@@ -5591,6 +7010,7 @@ function initB1337App() {
             <tr><th>Loaded Cartridge Title</th><td id="about-rom-title">NO CARTRIDGE</td></tr>
             <tr><th>Embedded ROM CRC32</th><td id="about-rom-crc">--------</td></tr>
             <tr><th>ROM Size (Bytes)</th><td id="about-rom-size">0</td></tr>
+            <tr><th>Save Memory Type</th><td id="about-rom-save">AUTO</td></tr>
             <tr><th>Header Checksum</th><td id="about-rom-chk">--</td></tr>
           </table>
           <p><b>Prior Art &amp; Lineage:</b></p>
@@ -5617,11 +7037,14 @@ function initB1337App() {
   const dropzone = document.getElementById('ui-dropzone');
   const cartBadge = document.getElementById('ui-cart-badge');
   const crcBadge  = document.getElementById('ui-crc-badge');
+  const saveBadge = document.getElementById('ui-save-badge');
   const linkBadge = document.getElementById('ui-link-badge');
   const fpsCounter= document.getElementById('ui-fps-counter');
   const powerDot  = document.getElementById('ui-power-dot');
   const statusTxt = document.getElementById('ui-status-txt');
   const mainGrid  = document.getElementById('ui-main-grid');
+  const screenWrap= document.getElementById('ui-screen-wrap');
+  const lcdGridEl = document.getElementById('ui-lcd-grid');
   const dbgPanel  = document.getElementById('ui-debugger');
   const dbgRegs   = document.getElementById('ui-dbg-regs');
   const dbgDisasm = document.getElementById('ui-dbg-disasm');
@@ -5644,9 +7067,11 @@ function initB1337App() {
     const crcHex = (gba.romCrc32 >>> 0).toString(16).toUpperCase().padStart(8, '0');
     cartBadge.textContent = gba.romTitle + ' [' + gba.romCode + ']';
     crcBadge.textContent  = 'CRC32: ' + crcHex;
+    saveBadge.textContent = 'SAVE: ' + gba.saveType;
     document.getElementById('about-rom-title').textContent = gba.romTitle + ' (' + gba.romCode + ' / ' + gba.romMaker + ')';
     document.getElementById('about-rom-crc').textContent   = '0x' + crcHex;
     document.getElementById('about-rom-size').textContent  = (gba.rawRomBytes ? gba.rawRomBytes.length : 0) + ' bytes';
+    document.getElementById('about-rom-save').textContent  = gba.saveType + ' (Detected: ' + gba.detectedSaveType + ')';
     document.getElementById('about-rom-chk').textContent   = '0x' + gba.headerChecksum.toString(16).toUpperCase().padStart(2, '0') + (gba.headerValid ? ' (VALID)' : ' (UNVERIFIED)');
 
     const tbl = document.getElementById('ui-header-table');
@@ -5656,6 +7081,7 @@ function initB1337App() {
       <tr><th>Maker Code</th><td>${gba.romMaker}</td></tr>
       <tr><th>ROM Size</th><td>${gba.rawRomBytes ? gba.rawRomBytes.length : 0} bytes</td></tr>
       <tr><th>ROM CRC32</th><td>0x${crcHex}</td></tr>
+      <tr><th>Save Memory</th><td><b>${gba.saveType}</b> (ROM Scan: ${gba.detectedSaveType})</td></tr>
       <tr><th>Header Checksum (0xBD)</th><td>0x${gba.headerChecksum.toString(16).toUpperCase().padStart(2, '0')} &mdash; <b style="color:${gba.headerValid ? 'var(--lime)' : 'var(--gold)'}">${gba.headerValid ? 'VALID' : 'CUSTOM / MICRO-ROM'}</b></td></tr>
     `;
   }
@@ -5687,20 +7113,46 @@ function initB1337App() {
     dbgDisasm.innerHTML = lines;
   }
 
-  function bootCartridgeBytes(u8) {
+  async function refreshRecentRomsBar() {
+    const bar = document.getElementById('ui-recent-roms');
+    if (!bar) return;
+    const list = await B1337LibraryDB.listRoms();
+    if (!list || list.length === 0) {
+      bar.innerHTML = '';
+      return;
+    }
+    bar.innerHTML = '<div style="width:100%;font-size:0.68rem;color:var(--muted);">RECENT CARTRIDGES (OFFLINE LIBRARY):</div>';
+    list.forEach((item) => {
+      const btn = document.createElement('button');
+      btn.className = 'b1337-btn';
+      btn.style.fontSize = '0.68rem';
+      btn.textContent = item.title + ' [' + (item.crc32 >>> 0).toString(16).toUpperCase().padStart(8, '0') + ']';
+      btn.addEventListener('click', () => {
+        bootCartridgeBytes(new Uint8Array(item.bytes));
+        showToast('Booted ' + item.title + ' from Library');
+      });
+      bar.appendChild(btn);
+    });
+  }
+  refreshRecentRomsBar();
+
+  function bootCartridgeBytes(u8, skipLibrarySave) {
     gba.loadRom(u8);
     hasCartridge = true;
     running = true;
     paused  = false;
+    rewindRing.length = 0;
     dropzone.classList.add('hidden');
     statusTxt.textContent = 'RUNNING';
     updateHeaderBadges();
     gba.runFrame();
     blitFramebuffer();
     updateDebuggerView();
+    if (!skipLibrarySave && gba.rawRomBytes && gba.rawRomBytes.length > 0) {
+      B1337LibraryDB.saveRom(gba.romCrc32, gba.romTitle, gba.romCode, gba.rawRomBytes).then(refreshRecentRomsBar);
+    }
   }
 
-  // Download helper
   function triggerDownload(filename, bytes, mime) {
     const blob = new Blob([bytes], { type: mime || 'application/octet-stream' });
     const url = URL.createObjectURL(blob);
@@ -5715,8 +7167,7 @@ function initB1337App() {
 
   function exportPolyglotPair() {
     if (!hasCartridge || !gba.rawRomBytes || gba.rawRomBytes.length === 0) {
-      // Load demo boot cartridge first if blank
-      bootCartridgeBytes(base64ToUint8(DEMO_BOOT_ROM_B64));
+      bootCartridgeBytes(base64ToUint8(DEMO_BOOT_ROM_B64), true);
     }
     try {
       const polyBytes = buildPolyglotCartridge(gba.rawRomBytes);
@@ -5731,13 +7182,191 @@ function initB1337App() {
     }
   }
 
-  // Animation & Frame Pacing Loop (Steady 60fps with Fast-Forward support)
+  // Save-State Slot Management (4 Slots with 60x40 Thumbnails)
+  function captureThumbnailDataUrl() {
+    try {
+      const tc = document.createElement('canvas');
+      tc.width = 60; tc.height = 40;
+      const tctx = tc.getContext('2d');
+      tctx.drawImage(canvas, 0, 0, 60, 40);
+      return tc.toDataURL('image/png');
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function saveToSlot(slotIdx) {
+    if (!hasCartridge) return;
+    const stateJson = gba.serializeState();
+    const thumb = captureThumbnailDataUrl();
+    const entry = {
+      stateJson,
+      thumb,
+      time: new Date().toLocaleTimeString(),
+      romCrc32: gba.romCrc32
+    };
+    stateSlots[slotIdx] = entry;
+    try {
+      localStorage.setItem('1337boy_slot_' + gba.romCrc32.toString(16) + '_' + slotIdx, JSON.stringify(entry));
+    } catch (e) {}
+    renderSlotGrid();
+    showToast('Saved State to Slot ' + (slotIdx + 1));
+  }
+
+  function loadFromSlot(slotIdx) {
+    if (!hasCartridge) return;
+    let entry = stateSlots[slotIdx];
+    if (!entry) {
+      try {
+        const raw = localStorage.getItem('1337boy_slot_' + gba.romCrc32.toString(16) + '_' + slotIdx);
+        if (raw) entry = JSON.parse(raw);
+      } catch (e) {}
+    }
+    if (!entry || !entry.stateJson) {
+      showToast('Slot ' + (slotIdx + 1) + ' is empty');
+      return;
+    }
+    gba.deserializeState(entry.stateJson);
+    blitFramebuffer();
+    updateHeaderBadges();
+    updateDebuggerView();
+    showToast('Loaded State from Slot ' + (slotIdx + 1));
+  }
+
+  function renderSlotGrid() {
+    const grid = document.getElementById('ui-slot-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    for (let i = 0; i < 4; i++) {
+      let entry = stateSlots[i];
+      if (!entry && hasCartridge) {
+        try {
+          const raw = localStorage.getItem('1337boy_slot_' + gba.romCrc32.toString(16) + '_' + i);
+          if (raw) entry = JSON.parse(raw);
+        } catch (e) {}
+      }
+      const card = document.createElement('div');
+      card.className = 'b1337-slot-card';
+      const imgHtml = (entry && entry.thumb)
+        ? `<img class="b1337-slot-thumb" src="${entry.thumb}" alt="Slot ${i + 1}">`
+        : `<div class="b1337-slot-thumb" style="display:flex;align-items:center;justify-content:center;font-size:0.65rem;color:var(--muted);">EMPTY</div>`;
+      card.innerHTML = `
+        ${imgHtml}
+        <div style="display:flex;flex-direction:column;gap:5px;flex:1;">
+          <div style="font-weight:900;color:var(--cyan);">SLOT ${i + 1} <span style="color:var(--muted);font-weight:400;font-size:0.68rem;">(F${i + 1})</span></div>
+          <div style="font-size:0.68rem;color:var(--gold);">${entry ? ('Saved ' + entry.time) : 'No state saved'}</div>
+          <div style="display:flex;gap:6px;">
+            <button class="b1337-btn lime" data-slot-save="${i}">SAVE</button>
+            <button class="b1337-btn primary" data-slot-load="${i}">LOAD</button>
+          </div>
+        </div>
+      `;
+      grid.appendChild(card);
+    }
+    grid.querySelectorAll('[data-slot-save]').forEach((b) => {
+      b.addEventListener('click', () => saveToSlot(parseInt(b.getAttribute('data-slot-save'), 10)));
+    });
+    grid.querySelectorAll('[data-slot-load]').forEach((b) => {
+      b.addEventListener('click', () => loadFromSlot(parseInt(b.getAttribute('data-slot-load'), 10)));
+    });
+  }
+
+  // Keyboard & Gamepad Input Handling with Custom Remapping
+  let keyboardMask = 0;
+  let touchMask    = 0;
+  let gamepadMask  = 0;
+  let listeningGbaBit = null;
+
+  const DEFAULT_KEY_BINDINGS = {
+    0: 'KeyX',       // A
+    1: 'KeyZ',       // B
+    2: 'Backspace',  // SELECT
+    3: 'Enter',      // START
+    4: 'ArrowRight', // RIGHT
+    5: 'ArrowLeft',  // LEFT
+    6: 'ArrowUp',    // UP
+    7: 'ArrowDown',  // DOWN
+    8: 'KeyS',       // R
+    9: 'KeyA'        // L
+  };
+  let keyBindings = Object.assign({}, DEFAULT_KEY_BINDINGS);
+  try {
+    const savedMap = localStorage.getItem('1337boy_keymap_v1');
+    if (savedMap) Object.assign(keyBindings, JSON.parse(savedMap));
+  } catch (e) {}
+
+  function rebuildReverseKeyMap() {
+    const rev = { 'ShiftLeft': 2, 'ShiftRight': 2 };
+    for (let bit = 0; bit < 10; bit++) {
+      if (keyBindings[bit]) rev[keyBindings[bit]] = bit;
+    }
+    return rev;
+  }
+  let keyMap = rebuildReverseKeyMap();
+
+  function renderRemapTable() {
+    const tbl = document.getElementById('ui-remap-table');
+    if (!tbl) return;
+    const labels = ['A Button', 'B Button', 'SELECT', 'START', 'D-Pad RIGHT', 'D-Pad LEFT', 'D-Pad UP', 'D-Pad DOWN', 'R Shoulder', 'L Shoulder'];
+    tbl.innerHTML = '';
+    for (let bit = 0; bit < 10; bit++) {
+      const tr = document.createElement('tr');
+      const isWait = (listeningGbaBit === bit);
+      tr.innerHTML = `
+        <th>${labels[bit]}</th>
+        <td><code style="color:var(--lime);font-weight:700;">${keyBindings[bit] || 'Unbound'}</code></td>
+        <td><button class="b1337-btn ${isWait ? 'gold' : ''}" data-remap-bit="${bit}">${isWait ? 'PRESS ANY KEY...' : 'REBIND'}</button></td>
+      `;
+      tbl.appendChild(tr);
+    }
+    tbl.querySelectorAll('[data-remap-bit]').forEach((b) => {
+      b.addEventListener('click', () => {
+        listeningGbaBit = parseInt(b.getAttribute('data-remap-bit'), 10);
+        renderRemapTable();
+      });
+    });
+  }
+
+  function pollPhysicalGamepads() {
+    if (typeof navigator === 'undefined' || !navigator.getGamepads) return 0;
+    try {
+      const pads = navigator.getGamepads();
+      let mask = 0;
+      for (let i = 0; i < pads.length; i++) {
+        const p = pads[i];
+        if (!p || !p.connected) continue;
+        const b = p.buttons;
+        if (b[1] && b[1].pressed) mask |= (1 << 0); // East / B -> GBA A
+        if (b[0] && b[0].pressed) mask |= (1 << 1); // South / A -> GBA B
+        if (b[8] && b[8].pressed) mask |= (1 << 2); // Select
+        if (b[9] && b[9].pressed) mask |= (1 << 3); // Start
+        if (b[15] && b[15].pressed) mask |= (1 << 4); // Right
+        if (b[14] && b[14].pressed) mask |= (1 << 5); // Left
+        if (b[12] && b[12].pressed) mask |= (1 << 6); // Up
+        if (b[13] && b[13].pressed) mask |= (1 << 7); // Down
+        if (b[5] && b[5].pressed) mask |= (1 << 8); // R1 -> GBA R
+        if (b[4] && b[4].pressed) mask |= (1 << 9); // L1 -> GBA L
+        if (p.axes && p.axes.length >= 2) {
+          if (p.axes[0] > 0.45)  mask |= (1 << 4);
+          if (p.axes[0] < -0.45) mask |= (1 << 5);
+          if (p.axes[1] < -0.45) mask |= (1 << 6);
+          if (p.axes[1] > 0.45)  mask |= (1 << 7);
+        }
+      }
+      return mask;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  function syncCombinedKeys() {
+    gba.setKeys((keyboardMask | touchMask | gamepadMask) & 0x03FF);
+  }
+
+  // Animation & Frame Pacing Loop (Steady 60fps + Speed Multiplier + Rewind + AudioWorklet pump)
   let lastFpsTime = performance.now();
   let framesInSec = 0;
-  letautosaveCounter = 0;
-
-  const GBA_FRAME_MS = 280896 * 1000 / 16777216; // 16.743 ms
-  let pacingLast = -1, pacingAcc = 0;
+  let autosaveCounter = 0;
 
   function rafLoop(now) {
     requestAnimationFrame(rafLoop);
@@ -5745,32 +7374,60 @@ function initB1337App() {
       linkBadge.textContent = 'LINK: PEER CONNECTED';
       linkBadge.className = 'b1337-badge lime';
     }
-    if (!running || paused || !hasCartridge) { pacingLast = -1; return; }
 
-    // 1.0.2 (Kehai Interim): pace by the clock, not by screen refreshes. A real
-    // GBA draws a frame every 280,896 cycles at 16.78 MHz (59.73 Hz). Running one
-    // frame per requestAnimationFrame made games 1.5x too fast on 90 Hz phones
-    // (2x on 120 Hz). Fast-forward is 4x real time.
-    if (pacingLast < 0) pacingLast = now;
-    let dt = now - pacingLast; pacingLast = now;
-    if (dt > 100) dt = 100; // back from a background tab: don't sprint
-    pacingAcc += dt * (fastForward ? 4 : 1);
-    let count = 0;
-    while (pacingAcc >= GBA_FRAME_MS && count < 8) {
+    const gp = pollPhysicalGamepads();
+    if (gp !== gamepadMask) {
+      gamepadMask = gp;
+      syncCombinedKeys();
+    }
+
+    if (!realtimeEnabled || !running || paused || !hasCartridge) return;
+
+    if (rewinding) {
+      if (rewindRing.length > 0) {
+        const snap = rewindRing.pop();
+        gba.deserializeState(snap);
+        blitFramebuffer();
+        if (debugOpen) updateDebuggerView();
+        statusTxt.textContent = 'REWIND (' + rewindRing.length + ')';
+      } else {
+        statusTxt.textContent = 'REWIND START';
+      }
+      return;
+    }
+
+    const effSpeed = fastForwardTab ? 4.0 : speedMult;
+    let framesToRun = 1;
+    if (effSpeed < 1.0) {
+      slowTickAccum += effSpeed;
+      if (slowTickAccum < 1.0) return;
+      slowTickAccum -= 1.0;
+      framesToRun = 1;
+    } else {
+      framesToRun = effSpeed | 0;
+    }
+
+    for (let i = 0; i < framesToRun; i++) {
       gba.runFrame();
       framesInSec++;
-      pacingAcc -= GBA_FRAME_MS;
-      count++;
+      rewindFrameTick++;
+      if (rewindFrameTick >= 15) {
+        rewindFrameTick = 0;
+        if (rewindRing.length >= REWIND_MAX) rewindRing.shift();
+        rewindRing.push(gba.serializeState());
+      }
     }
-    if (count >= 8) pacingAcc = 0;
-    if (count === 0) return;
+    audio.pumpWorkletSamples();
     blitFramebuffer();
     if (debugOpen) updateDebuggerView();
 
-    letautosaveCounter++;
-    if (letautosaveCounter >= 120) {
-      letautosaveCounter = 0;
+    autosaveCounter++;
+    if (autosaveCounter >= 120) {
+      autosaveCounter = 0;
       gba.saveAutosave();
+      if (saveBadge.textContent !== 'SAVE: ' + gba.saveType) {
+        saveBadge.textContent = 'SAVE: ' + gba.saveType;
+      }
     }
 
     const elapsed = now - lastFpsTime;
@@ -5783,25 +7440,30 @@ function initB1337App() {
   }
   requestAnimationFrame(rafLoop);
 
-  // Keyboard & Touch Input Handling
-  let activeKeyMask = 0;
-  const keyMap = {
-    'KeyX': 0,       // A
-    'KeyZ': 1,       // B
-    'Backspace': 2,  // SELECT
-    'ShiftLeft': 2,  // SELECT
-    'ShiftRight': 2, // SELECT
-    'Enter': 3,      // START
-    'ArrowRight': 4, // RIGHT
-    'ArrowLeft': 5,  // LEFT
-    'ArrowUp': 6,    // UP
-    'ArrowDown': 7,  // DOWN
-    'KeyS': 8,       // R
-    'KeyA': 9        // L
-  };
-
   window.addEventListener('keydown', (ev) => {
+    if (ev.target && (ev.target.tagName === 'INPUT' || ev.target.tagName === 'SELECT')) return;
     audio.startOnGesture();
+
+    if (listeningGbaBit !== null) {
+      ev.preventDefault();
+      keyBindings[listeningGbaBit] = ev.code;
+      keyMap = rebuildReverseKeyMap();
+      try {
+        localStorage.setItem('1337boy_keymap_v1', JSON.stringify(keyBindings));
+      } catch (e) {}
+      listeningGbaBit = null;
+      renderRemapTable();
+      showToast('Bound ' + ev.code);
+      return;
+    }
+
+    if (ev.code === 'F1' || ev.code === 'F2' || ev.code === 'F3' || ev.code === 'F4') {
+      ev.preventDefault();
+      const slot = parseInt(ev.code.slice(1), 10) - 1;
+      if (ev.shiftKey) saveToSlot(slot);
+      else loadFromSlot(slot);
+      return;
+    }
     if (ev.code === 'Backquote') {
       ev.preventDefault();
       debugOpen = !debugOpen;
@@ -5810,9 +7472,19 @@ function initB1337App() {
       updateDebuggerView();
       return;
     }
+    if (ev.code === 'KeyR') {
+      ev.preventDefault();
+      rewinding = true;
+      return;
+    }
+    if (ev.code === 'KeyN') {
+      ev.preventDefault();
+      stepSingleFrame();
+      return;
+    }
     if (ev.code === 'Tab') {
       ev.preventDefault();
-      fastForward = true;
+      fastForwardTab = true;
       powerDot.classList.add('fast');
       statusTxt.textContent = 'TURBO 4X';
       return;
@@ -5820,17 +7492,23 @@ function initB1337App() {
     if (ev.code in keyMap) {
       ev.preventDefault();
       const bit = keyMap[ev.code];
-      activeKeyMask |= (1 << bit);
-      gba.setKeys(activeKeyMask);
+      keyboardMask |= (1 << bit);
+      syncCombinedKeys();
       const btn = document.querySelector(`[data-gba-key="${bit}"]`);
       if (btn) btn.classList.add('pressed');
     }
   });
 
   window.addEventListener('keyup', (ev) => {
+    if (ev.code === 'KeyR') {
+      ev.preventDefault();
+      rewinding = false;
+      statusTxt.textContent = paused ? 'PAUSED' : 'RUNNING';
+      return;
+    }
     if (ev.code === 'Tab') {
       ev.preventDefault();
-      fastForward = false;
+      fastForwardTab = false;
       powerDot.classList.remove('fast');
       statusTxt.textContent = paused ? 'PAUSED' : 'RUNNING';
       return;
@@ -5838,8 +7516,8 @@ function initB1337App() {
     if (ev.code in keyMap) {
       ev.preventDefault();
       const bit = keyMap[ev.code];
-      activeKeyMask &= ~(1 << bit);
-      gba.setKeys(activeKeyMask);
+      keyboardMask &= ~(1 << bit);
+      syncCombinedKeys();
       const btn = document.querySelector(`[data-gba-key="${bit}"]`);
       if (btn) btn.classList.remove('pressed');
     }
@@ -5853,20 +7531,92 @@ function initB1337App() {
       ev.preventDefault();
       audio.startOnGesture();
       document.body.classList.add('playing-touch');
-      activeKeyMask |= (1 << bit);
-      gba.setKeys(activeKeyMask);
+      touchMask |= (1 << bit);
+      syncCombinedKeys();
       btn.classList.add('pressed');
     };
     const release = (ev) => {
       ev.preventDefault();
-      activeKeyMask &= ~(1 << bit);
-      gba.setKeys(activeKeyMask);
+      touchMask &= ~(1 << bit);
+      syncCombinedKeys();
       btn.classList.remove('pressed');
     };
     btn.addEventListener('pointerdown', press);
     btn.addEventListener('pointerup', release);
     btn.addEventListener('pointerleave', release);
     btn.addEventListener('pointercancel', release);
+  });
+
+  // Rewind button (Toolbar + Touch Deck)
+  for (const rwId of ['btn-rewind', 'btn-touch-rewind']) {
+    const rwBtn = document.getElementById(rwId);
+    if (rwBtn) {
+      const startRw = (ev) => { ev.preventDefault(); rewinding = true; };
+      const stopRw  = (ev) => { ev.preventDefault(); rewinding = false; statusTxt.textContent = paused ? 'PAUSED' : 'RUNNING'; };
+      rwBtn.addEventListener('pointerdown', startRw);
+      rwBtn.addEventListener('pointerup', stopRw);
+      rwBtn.addEventListener('pointerleave', stopRw);
+    }
+  }
+
+  function stepSingleFrame() {
+    if (!hasCartridge) return;
+    paused = true;
+    statusTxt.textContent = 'FRAME STEP';
+    gba.runFrame();
+    blitFramebuffer();
+    updateDebuggerView();
+  }
+  document.getElementById('btn-step-frame').addEventListener('click', stepSingleFrame);
+
+  // Speed selector
+  document.getElementById('sel-speed').addEventListener('change', (ev) => {
+    speedMult = parseFloat(ev.target.value) || 1.0;
+    powerDot.classList.toggle('fast', speedMult > 1.0);
+    statusTxt.textContent = (speedMult === 1.0) ? 'RUNNING' : ('SPEED ' + speedMult + 'X');
+  });
+
+  // Display Options: Integer Scale, LCD Grid, GBA Color Correction, Fullscreen, Screenshot
+  document.getElementById('btn-intscale').addEventListener('click', (ev) => {
+    intScale = !intScale;
+    screenWrap.classList.toggle('int-scale', intScale);
+    ev.target.classList.toggle('active-toggle', intScale);
+  });
+  document.getElementById('btn-lcdgrid').addEventListener('click', (ev) => {
+    lcdGrid = !lcdGrid;
+    lcdGridEl.classList.toggle('hidden', !lcdGrid);
+    ev.target.classList.toggle('active-toggle', lcdGrid);
+  });
+  document.getElementById('btn-colorcorr').addEventListener('click', (ev) => {
+    gba.colorCorrection = !gba.colorCorrection;
+    ev.target.classList.toggle('active-toggle', gba.colorCorrection);
+    if (hasCartridge) {
+      for (let y = 0; y < 160; y++) gba.renderScanline(y);
+      blitFramebuffer();
+    }
+  });
+  document.getElementById('btn-fullscreen').addEventListener('click', () => {
+    const shell = document.getElementById('ui-console-shell');
+    if (!document.fullscreenElement) {
+      if (shell.requestFullscreen) shell.requestFullscreen().catch(() => {});
+    } else {
+      if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+    }
+  });
+  document.getElementById('btn-snap').addEventListener('click', () => {
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const slug = (gba.romTitle || '1337boy').toLowerCase().replace(/[^a-z0-9]+/g, '') || '1337boy';
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = slug + '_snap.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      showToast('Saved 240x160 PNG Screenshot');
+    }, 'image/png');
   });
 
   // Drag-and-Drop ROM loading
@@ -5909,7 +7659,7 @@ function initB1337App() {
 
   const bootDemoHandler = () => {
     audio.startOnGesture();
-    bootCartridgeBytes(base64ToUint8(DEMO_BOOT_ROM_B64));
+    bootCartridgeBytes(base64ToUint8(DEMO_BOOT_ROM_B64), true);
     showToast('Booted hand-assembled 1337 BOOT Quine Cartridge!');
   };
   document.getElementById('btn-boot-demo').addEventListener('click', bootDemoHandler);
@@ -5927,13 +7677,20 @@ function initB1337App() {
     triggerDownload(slug + '.1337.html', polyBytes, 'text/html');
   });
 
+  // Save Type Override Selector
+  document.getElementById('sel-savetype').addEventListener('change', (ev) => {
+    const nextType = gba.setSaveType(ev.target.value);
+    updateHeaderBadges();
+    showToast('Save Memory Type set to ' + nextType);
+  });
+
   // Self-Test Trigger Button
   const triggerSelfTestModal = async () => {
     const modal = document.getElementById('modal-selftest');
     const summaryEl = document.getElementById('ui-selftest-summary');
     const listEl = document.getElementById('ui-selftest-list');
     modal.classList.remove('hidden');
-    summaryEl.textContent = 'Executing 380+ hardware verification tests...';
+    summaryEl.textContent = 'Executing 390+ hardware verification tests...';
     listEl.innerHTML = '';
 
     const res = await window.B1337.selftest();
@@ -5966,6 +7723,76 @@ function initB1337App() {
     paused = false;
     document.getElementById('modal-pause').classList.add('hidden');
     showToast('Console Cold Reset');
+  });
+
+  // Save-State Slots Modal
+  document.getElementById('btn-slots').addEventListener('click', () => {
+    renderSlotGrid();
+    document.getElementById('modal-slots').classList.remove('hidden');
+  });
+  document.getElementById('btn-close-slots').addEventListener('click', () => {
+    document.getElementById('modal-slots').classList.add('hidden');
+  });
+
+  // Remap Controls Modal
+  document.getElementById('btn-remap').addEventListener('click', () => {
+    listeningGbaBit = null;
+    renderRemapTable();
+    document.getElementById('modal-remap').classList.remove('hidden');
+  });
+  document.getElementById('btn-close-remap').addEventListener('click', () => {
+    listeningGbaBit = null;
+    document.getElementById('modal-remap').classList.add('hidden');
+  });
+  document.getElementById('btn-reset-remap').addEventListener('click', () => {
+    keyBindings = Object.assign({}, DEFAULT_KEY_BINDINGS);
+    keyMap = rebuildReverseKeyMap();
+    try { localStorage.removeItem('1337boy_keymap_v1'); } catch (e) {}
+    listeningGbaBit = null;
+    renderRemapTable();
+    showToast('Restored default key bindings');
+  });
+
+  // Cheats Modal
+  function renderCheatList() {
+    const listEl = document.getElementById('ui-cheat-list');
+    if (gba.cheats.length === 0) {
+      listEl.innerHTML = 'No active cheats.';
+      return;
+    }
+    listEl.innerHTML = gba.cheats.map((c, idx) =>
+      `<div class="b1337-test-row pass"><span><b>${c.code}</b> &mdash; ${c.desc}</span><button class="b1337-btn" data-del-cheat="${idx}" style="padding:2px 6px;font-size:0.65rem;">REMOVE</button></div>`
+    ).join('');
+    listEl.querySelectorAll('[data-del-cheat]').forEach((b) => {
+      b.addEventListener('click', () => {
+        gba.cheats.splice(parseInt(b.getAttribute('data-del-cheat'), 10), 1);
+        renderCheatList();
+      });
+    });
+  }
+  document.getElementById('btn-cheats').addEventListener('click', () => {
+    renderCheatList();
+    document.getElementById('modal-cheats').classList.remove('hidden');
+  });
+  document.getElementById('btn-close-cheats').addEventListener('click', () => {
+    document.getElementById('modal-cheats').classList.add('hidden');
+  });
+  document.getElementById('btn-add-cheat').addEventListener('click', () => {
+    const codeInp = document.getElementById('inp-cheat-code');
+    const descInp = document.getElementById('inp-cheat-desc');
+    const added = gba.addCheat(codeInp.value, descInp.value);
+    if (added) {
+      codeInp.value = '';
+      descInp.value = '';
+      renderCheatList();
+      showToast('Added cheat ' + added.code);
+    } else {
+      showToast('Invalid format. Use ADDR:VAL (e.g. 02000000:FF)');
+    }
+  });
+  document.getElementById('btn-clear-cheats').addEventListener('click', () => {
+    gba.clearCheats();
+    renderCheatList();
   });
 
   // Debugger Panel & Controls
@@ -6017,11 +7844,12 @@ function initB1337App() {
     }
   });
 
-  // Save & Load SRAM (.sav)
+  // Save & Load Battery Backup (.sav: 32KB SRAM, 64KB/128KB Flash, or 512B/8KB EEPROM)
   document.getElementById('btn-savesav').addEventListener('click', () => {
     const slug = (gba.romTitle || 'save').toLowerCase().replace(/[^a-z0-9]+/g, '') || 'save';
-    triggerDownload(slug + '.sav', gba.sram, 'application/octet-stream');
-    showToast('Downloaded 32 KB SRAM (' + slug + '.sav)');
+    const saveBytes = gba.exportSaveBytes();
+    triggerDownload(slug + '.sav', saveBytes, 'application/octet-stream');
+    showToast('Downloaded ' + saveBytes.length + ' B (' + gba.saveType + ') to ' + slug + '.sav');
   });
   document.getElementById('btn-loadsav').addEventListener('click', () => savInput.click());
   savInput.addEventListener('change', (ev) => {
@@ -6029,11 +7857,9 @@ function initB1337App() {
     if (file) {
       file.arrayBuffer().then((buf) => {
         const u8 = new Uint8Array(buf);
-        gba.sram.fill(0);
-        gba.sram.set(u8.subarray(0, 0x8000));
-        gba.sramDirty = true;
-        gba.saveAutosave();
-        showToast('Loaded SRAM (' + u8.length + ' bytes)');
+        gba.importSaveBytes(u8);
+        updateHeaderBadges();
+        showToast('Loaded ' + u8.length + ' B into ' + gba.saveType);
       });
     }
   });
@@ -6060,8 +7886,16 @@ function initB1337App() {
   // Expose Required Window Automation Hooks for the Tester!
   window.B1337 = {
     gba,
+    setRealtime(enabled) {
+      realtimeEnabled = !!enabled;
+      return realtimeEnabled;
+    },
+    setSpeed(mult) {
+      speedMult = Number(mult) || 1.0;
+      return speedMult;
+    },
     loadRom(u8) {
-      bootCartridgeBytes(u8 instanceof Uint8Array ? u8 : new Uint8Array(u8));
+      bootCartridgeBytes(u8 instanceof Uint8Array ? u8 : new Uint8Array(u8), true);
       return gba.romCrc32 >>> 0;
     },
     runFrames(n) {
@@ -6074,8 +7908,8 @@ function initB1337App() {
       return gba.fb;
     },
     setKeys(mask) {
-      activeKeyMask = mask & 0x03FF;
-      gba.setKeys(activeKeyMask);
+      keyboardMask = mask & 0x03FF;
+      syncCombinedKeys();
     },
     frameBuffer() {
       return new Uint8ClampedArray(gba.fb);
@@ -6083,8 +7917,16 @@ function initB1337App() {
     crc32() {
       return gba.romCrc32 >>> 0;
     },
+    saveType() {
+      return gba.saveType;
+    },
+    setSaveType(type) {
+      const res = gba.setSaveType(type);
+      updateHeaderBadges();
+      return res;
+    },
     sram() {
-      return new Uint8Array(gba.sram);
+      return gba.exportSaveBytes();
     },
     buildPolyglot(u8) {
       return buildPolyglotCartridge(u8);
@@ -6098,7 +7940,7 @@ function initB1337App() {
   if (embeddedRomB64 && embeddedRomB64.length > 0) {
     const romBytes = base64ToUint8(embeddedRomB64);
     if (romBytes.length > 0) {
-      bootCartridgeBytes(romBytes);
+      bootCartridgeBytes(romBytes, true);
     }
   }
 }

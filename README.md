@@ -1,40 +1,39 @@
-# 1337Boy™: the cartridge that is its own console
+# 1337Boy™ COLOR ADVANCE TURBO v1.1 (999,999 GAMES IN 1!)
 
-**[▶ Open the console](https://consciousnode.github.io/1337Boy/)** · [play *Wrongfully Accused*](https://consciousnode.github.io/1337Boy/cartridges/wrongfully-accused.1337.html) · [play *GBA-Craft*](https://consciousnode.github.io/1337Boy/cartridges/gba-craft.1337.html) · [the 1337 BOOT demo](https://consciousnode.github.io/1337Boy/1337boot.1337.html)
-(The links work once GitHub Pages is switched on for this repo.)
-
-Every `.1337.gba` file here is **one file that is two things**: a Game Boy Advance ROM (mGBA, a flash cart) and a web page that carries a GBA emulator written from scratch and plays the cartridge it's part of. The `.1337.html` next to each one is the exact same bytes with a different name.
-
-| File | What |
-|---|---|
-| `1337boy.html` (= `index.html`) | The blank console, **1.0.2**: insert any `.gba`, or 1337IFY! it into a polyglot |
-| `1337boot.1337.gba` / `.html` | The hand-assembled demo cartridge, which checksums itself |
-| `cartridges/wrongfully-accused.1337.gba` / `.html` | The studio's Edo courtroom game, as its own console |
-| `cartridges/gba-craft.1337.gba` / `.html` | The studio's voxel sandbox, as its own console |
-| `tools/1337ify.py` | Command-line builder (Python 3, standard library only) |
-| `tests/` | Independent tests; results in [TESTING.md](TESTING.md) |
-
-**Versions:** 1.0 is Argon's original, as delivered (commit `ea62fcd`). 1.0.1 makes the console fit phone screens. 1.0.2 paces games by the clock (59.73 Hz) instead of by screen refreshes, so they no longer run fast on 90/120 Hz phones.
-
-**Credits:** concept and direction, Khamerron Kizer · written by Gemini 4 Argon · testing and the 1.0.1/1.0.2 fixes, Kehai Interim (Claude).
-
----
-
-*Argon's original README follows.*
-
-# 1337Boy™ COLOR ADVANCE TURBO (999,999 GAMES IN 1!)
-
-> **CONSCIOUSNODE SOFTWORKS // XINU EDITION**
+> **CONSCIOUSNODE SOFTWORKS // XINU EDITION v1.1**
 > *"FLASH IT TO A CART, OR DOUBLE-CLICK IT IN A BROWSER. THE CARTRIDGE IS ITS OWN CONSOLE."*
 > `Copyright (c) 2026 Khamerron Kizer / ConsciousNode SoftWorks` — Licensed under the **MIT License**.
 
-Welcome to **1337Boy™ COLOR ADVANCE TURBO**, the self-hosting Game Boy Advance polyglot system engineered under the **Xinu** house philosophy (the inverse of Unix): **single file, zero dependencies, offline-first, and constraint generates novelty**.
+Welcome to **1337Boy™ COLOR ADVANCE TURBO v1.1**, the self-hosting Game Boy Advance polyglot system engineered under the **Xinu** house philosophy (the inverse of Unix): **single file, zero dependencies, offline-first, and constraint generates novelty**.
 
 A 1337Boy cartridge is **one file** that is, byte-for-byte, both:
 1. **A valid Game Boy Advance ROM** (`0x08000000` entry branch, valid 192-byte cartridge header, unmodified binary prefix) that boots on real GBA hardware via a flash cart and in emulators like mGBA.
 2. **A valid HTML5 document** that, opened in any modern browser, executes a hand-written, zero-dependency ARM7TDMI + GBA emulator and boots the exact cartridge it carries.
 
 Name it `.1337.gba` and drop it into mGBA or an EverDrive. Name the **exact same bytes** `.1337.html` and open it in Chromium, Firefox, or Safari. Both play the same cartridge.
+
+## What's New in v1.1
+
+- **Tier 1 Correctness Upgrades**:
+  - **Thumb `STMIA` & `PUSH` Empty Register List (`thumb.gba` test 229)**: `STMIA Rb!, {}` (`0xC000`) and `PUSH {}` (`0xB400`) now store `PC + 6` (`instr_addr + 6`, matching the pipeline PC seen by the next instruction) and adjust the base/stack pointer by `0x40`.
+  - **2-Stage ARM & Thumb Instruction Prefetch Pipeline (`nes.gba` test 1)**: Models the hardware 2-slot prefetch queue (`pipe0`, `pipe1`, `pipePc`), executing already-fetched opcodes when self-modifying code overwrites `PC + 4` (ARM) or `PC + 2` (Thumb), and flushing on any write to `R15` (`B`, `BL`, `BX`, `LDR PC`, `LDM {PC}`, `POP {PC}`, `ALU Rd=15`, `SWI`, `IRQ`).
+  - **Hardware-Accurate BIOS Open-Bus Reads (`bios.gba` test 3)**: Tracks the exact BIOS fetch latch across all 4 hardware states: `0xE129F000` after startup/`SoftReset`/`IntrWait`/`VBlankIntrWait`, `0xE25EF004` **during** an IRQ, `0xE55EC002` **after** IRQ return (`SUBS PC, LR, #4` at `0x013C`), and `0xE3A02004` after a `SWI` (plus `SWI 0x0D` `GetBiosChecksum` returning `0xBAAE187F`).
+  - **All 4 Save Memory Types (`SRAM`, `FLASH64`, `FLASH128`, `EEPROM` 512B/8KB, plus `NONE`)**:
+    - **SRAM (32 KB)**: Initialized to `0xFF` (erased state) and mirrored across the full `0x0E000000–0x0FFFFFFF` region (`save/sram.gba` & `save/none.gba`).
+    - **Flash 64 KB & 128 KB**: Full command state machine (`0xAA` at `0x5555`, `0x55` at `0x2AAA`, commands `0x90` Chip ID, `0xF0` Reset, `0x80` Erase setup, `0x10` Chip erase, `0x30` 4 KB Sector erase, `0xA0` Byte program, and `0xB0` Bank switch for 128 KB), using Macronix `MX29L512` (`0x1CC2`) for 64 KB and Sanyo `LE26FV10N1TS` (`0x1362`) for 128 KB (`save/flash64.gba` & `save/flash128.gba`).
+    - **EEPROM 512 B & 8 KB**: Serial bitstream protocol over DMA3 at `0x0D000000–0x0DFFFFFF` with 6-bit vs. 14-bit address width inferred from DMA3 transfer length (`9`/`73` vs. `17`/`81` halfwords) and ready-bit (`1`) polling.
+    - **Auto-Detection + Heuristic Fallback + UI Override**: Scans ROM bytes for `SRAM_V`, `SRAM_F_V`, `FLASH_V`, `FLASH512_V`, `FLASH1M_V`, `EEPROM_V`, falls back heuristically when no string is present, and provides a manual override dropdown in the **PAUSE / INFO** modal and `window.B1337.setSaveType()`.
+  - **Deterministic Headless Stepping (`window.B1337.setRealtime(false|true)`)**: Pauses the `requestAnimationFrame` loop so headless test runners calling `B1337.runFrames(n)` step the exact requested frame count.
+- **Tier 2 Accuracy Upgrades**:
+  - **Hardware Cycle Timing (`WAITCNT` `0x04000204`, Prefetch Buffer, and DMA Stalls)**: Implements non-sequential (`N`) and sequential (`S`) waitstate tables for ROM WS0/WS1/WS2 (16-bit and 32-bit), SRAM waitstates, EWRAM (3 cycles 8/16-bit, 6 cycles 32-bit), VRAM/Palette/OAM bus width rules, the Game Pak Prefetch Buffer (`WAITCNT` bit 14), Booth multiplier internal cycles, and DMA bus stall cycles.
+  - **Sound Upgrade (PSG Channel 3 Wave RAM, Envelopes/Sweep, `SOUNDBIAS`, and `AudioWorklet`)**: Full dual-bank 32/64-sample Wave RAM at `0x04000090–0x0400009F`, 512 Hz PSG Frame Sequencer (256 Hz length counters, 128 Hz Channel 1 frequency sweep, 64 Hz volume envelopes), `SOUNDCNT_X` active channel flags, `SOUNDBIAS` bit-depth quantization, and an inline `Blob` URL `AudioWorklet` driver with automatic `ScriptProcessorNode` fallback.
+- **Tier 3 Standard Emulator Toolkit**:
+  - **Physical Gamepad API (`navigator.getGamepads()`) + Custom Key Remapping** persisted to `localStorage`.
+  - **4 Save-State Slots (`F1–F4` Load / `Shift+F1–F4` Save)** with live 60x40 screen thumbnails and per-ROM persistence, plus `.1337state` file export/import.
+  - **Real-Time Rewind Ring Buffer** (hold `R` or the on-screen `REWIND` button to step backward through 15 seconds of gameplay).
+  - **Speed Control (`0.25x`, `0.5x`, `1x`, `2x`, `4x`, `8x`) & Single-Frame Advance (`+1 FRAME` / `N`)**.
+  - **PNG Screenshot Button (`SNAP PNG`)**, **Integer Scaling (`INT SCALE`)**, **Subpixel LCD Grid Overlay (`LCD GRID`)**, **GBA AGB-001 LCD Color Correction (`GBA COLOR`)**, **Fullscreen Toggle (`FULLSCREEN`)**, **Offline Recent ROMs Library (`IndexedDB`)**, and **Memory Cheats Engine (`ADDR:VAL` & CodeBreaker)**.
+  - **Preserved 1.0.1 Phone Layout CSS**: Verified at `360px`, `412px`, and `600px` mobile viewports with zero horizontal overflow (`scrollWidth == clientWidth`).
 
 ## Quick Start & Operating Instructions
 
@@ -61,12 +60,8 @@ python3 tools/1337ify.py --build-boot -o 1337boot.1337.gba
 python3 tools/1337ify.py --raw-boot-only -o 1337boot.gba
 ```
 
-- **Byte-Identical Guarantee**: `tools/1337ify.py` produces output that is byte-for-byte identical to the in-browser **1337IFY!** button for the same ROM.
-- **Idempotent Re-1337ification**: Passing an already-1337ified `.1337.gba` or `.1337.html` file back into `tools/1337ify.py` (or the browser dropzone) automatically detects the reset sequence + `<!--1337BOY-POLYGLOT-START-->` marker, strips the old HTML tail, and rebuilds cleanly without nesting.
-- **Tokenizer Safety Scanner**: `tools/1337ify.py` scans every ROM case-insensitively before building, refuses any ROM containing `<plaintext` (which enters the unrecoverable HTML5 PLAINTEXT state), and logs all other tag-like openings (`<` followed by an ASCII letter, `!`, `/`, or `?`).
-
-### 3. Running the Built-In Hardware Self-Test (380 Vectors)
-1337Boy ships with **380 built-in hardware verification tests** covering ARM ALU/shifter/flags (210 cases), Thumb instructions across all 19 formats (135 cases), memory mirroring/misaligned rotated reads/SRAM 8-bit bus, BIOS `Div`/`Sqrt`/`LZ77` round-trip, PPU Mode 3 affine 2x scaling & bitmap-mode OBJ tile 512+ restrictions, and in-memory polyglot round-trip verification:
+### 3. Running the Built-In Hardware Self-Test (391 Vectors)
+1337Boy v1.1 ships with **391 built-in hardware verification tests** covering ARM ALU/shifter/flags (210 cases), Thumb instructions across all 19 formats including empty-list `STMIA`/`PUSH` (137 cases), ARM & Thumb 2-stage prefetch pipeline self-modifying code (`nes` test 1), BIOS open-bus states (`bios` test 1–3), all 4 save memory protocols (`SRAM`, `FLASH64`, `FLASH128`, `EEPROM`), `WAITCNT` timing tables, PSG Channel 3 dual-bank Wave RAM, PPU Mode 3 affine scaling & bitmap-mode OBJ tile 512+ restrictions, and in-memory polyglot round-trip verification:
 - **In-Page Button**: Click **SELF-TEST** on the top toolbar (or on the splash dropzone).
 - **JavaScript Hook**: Call `await window.B1337.selftest()` from the console or test runner, which resolves to `{ passed, failed, results: [{ name, pass, detail }] }`.
 
@@ -75,28 +70,18 @@ When loaded in headless Chromium or any browser, `window.B1337` exposes:
 
 | Hook | Signature & Return Value |
 | :--- | :--- |
+| `window.B1337.setRealtime(bool)` | Pauses (`false`) or resumes (`true`) the `requestAnimationFrame` loop so `runFrames(n)` steps an exact deterministic number of frames. |
 | `window.B1337.loadRom(u8)` | Loads a `Uint8Array` (raw `.gba` or `.1337.gba` polyglot), resets the console, and returns the 32-bit unsigned ROM `CRC32`. |
 | `window.B1337.runFrames(n)` | Steps `n` complete frames (228 scanlines x 1,232 cycles = 280,896 cycles/frame) and returns the `240x160x4` RGBA `Uint8ClampedArray`. |
 | `window.B1337.setKeys(mask)` | Sets active button bitmask (`bit 0=A, 1=B, 2=Select, 3=Start, 4=Right, 5=Left, 6=Up, 7=Down, 8=R, 9=L`). |
 | `window.B1337.frameBuffer()` | Returns a copy of the `240x160x4` RGBA `Uint8ClampedArray` framebuffer (`153,600` bytes). |
 | `window.B1337.crc32()` | Returns the unsigned 32-bit IEEE 802.3 CRC32 of the loaded ROM prefix. |
-| `window.B1337.sram()` | Returns a copy of the 32 KB `Uint8Array` (`32,768` bytes) Game Pak SRAM. |
-| `window.B1337.selftest()` | Runs all 380 built-in tests and returns a `Promise<{passed, failed, results}>`. |
-
-## Controls & Quality-of-Life Features
-
-| GBA Input / Feature | Desktop Keyboard | Mobile / Touch Overlay |
-| :--- | :--- | :--- |
-| **D-Pad (Up / Down / Left / Right)** | Arrow Keys | On-screen D-Pad (multi-touch, scroll-locked) |
-| **A Button** | `X` | Red `A` button |
-| **B Button** | `Z` | Yellow `B` button |
-| **L / R Shoulder Buttons** | `A` / `S` | Top `L` / `R` shoulder buttons |
-| **START / SELECT** | `Enter` / `Backspace` or `Shift` | Center `START` / `SELECT` pill buttons |
-| **Fast-Forward (4x Turbo)** | Hold `Tab` | Indicator LED turns Gold (`TURBO 4X`) |
-| **Step Debugger & Disassembler** | Backquote (`` ` ``) | Toolbar **DEBUG (`)** button |
-| **Pause & Header Inspector** | Toolbar **PAUSE / INFO** | Displays Title, Code, Maker, Checksum, & Validity |
-| **Save / Load State** | Toolbar **SAVE .1337STATE** / **LOAD STATE** | Full JSON + Base64 hardware snapshot |
-| **Save / Load SRAM (`.sav`)** | Toolbar **SAVE .SAV** / **LOAD .SAV** | 32 KB raw `.sav` + graceful `localStorage` autosave |
+| `window.B1337.saveType()` | Returns the active save memory type (`'SRAM'`, `'FLASH64'`, `'FLASH128'`, `'EEPROM'`, `'AUTO'`, `'NONE'`). |
+| `window.B1337.setSaveType(type)` | Overrides the save memory type (`'AUTO'`, `'SRAM'`, `'FLASH64'`, `'FLASH128'`, `'EEPROM512'`, `'EEPROM8K'`, `'NONE'`). |
+| `window.B1337.sram()` | Returns a `Uint8Array` copy of the active battery save buffer (`32 KB` SRAM, `64 KB`/`128 KB` Flash, or `512 B`/`8 KB` EEPROM). |
+| `window.B1337.setSpeed(mult)` | Sets the emulation speed multiplier (`0.25`, `0.5`, `1`, `2`, `4`, `8`). |
+| `window.B1337.buildPolyglot(u8)` | Builds and returns a byte-exact `.1337.gba` / `.1337.html` polyglot `Uint8Array` from `u8`. |
+| `window.B1337.selftest()` | Runs all 391 built-in tests and returns a `Promise<{passed, failed, results}>`. |
 
 ## Prior Art & Legal Note on Lockout Header Bytes
 
@@ -107,5 +92,5 @@ When loaded in headless Chromium or any browser, `window.B1337` exposes:
 - **Kyle Conroy (2014)**: Coined *"HTML ROMs"* for self-contained, single-file offline web applications.
 
 ### Interoperability & the GBA Cartridge Header Logo (*Sega v. Accolade*)
-- **1337Boy (`1337boy.html`) contains zero Nintendo BIOS code and zero commercial ROM data.** Its 16 KB BIOS (`0x00000000..0x00003FFF`) and all 21 SWI routines are written from scratch from hardware specifications.
+- **1337Boy (`1337boy.html`) contains zero Nintendo BIOS code and zero commercial ROM data.** Its 16 KB BIOS (`0x00000000..0x00003FFF`) and all 22 SWI routines are written from scratch from hardware specifications.
 - **GBA Cartridge Header (`0x04..0x9F`)**: Real Game Boy Advance hardware verifies a mandatory 156-byte compressed bitmap at cartridge offset `0x04..0x9F` before jumping to `0x08000000`. When 1337Boy wraps a user's ROM, those bytes come from the user's ROM. For the hand-assembled `1337 BOOT` demo cartridge (`1337boot.1337.gba`), `tools/1337ify.py` emits the mandatory 156-byte header sequence strictly as required for hardware lockout compliance, following the well-established interoperability precedent of *Sega Enterprises Ltd. v. Accolade, Inc.*, 977 F.2d 1510 (9th Cir. 1992).

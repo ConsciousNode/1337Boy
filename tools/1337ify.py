@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-1337ify.py - The 1337Boy(TM) Polyglot Cartridge Builder & Hand-Assembler
+1337ify.py (v1.1) - The 1337Boy(TM) Polyglot Cartridge Builder & Hand-Assembler
 Copyright (c) 2026 Khamerron Kizer / ConsciousNode SoftWorks
 License: MIT
 House Philosophy: Xinu (Single File, Zero Dependencies, Offline-First)
@@ -527,7 +527,7 @@ def main():
     parser = argparse.ArgumentParser(description="1337ify: Build a self-playing GBA + HTML5 polyglot cartridge.")
     parser.add_argument("input", nargs="?", help="Input .gba ROM file (or existing .1337.gba polyglot)")
     parser.add_argument("-o", "--output", required=True, help="Output .1337.gba / .1337.html path")
-    parser.add_argument("--template", help="Path to 1337boy.html template (auto-detected if omitted)")
+    parser.add_argument("--template", "--html", dest="template", help="Path to 1337boy.html template (auto-detected if omitted)")
     parser.add_argument("--build-boot", action="store_true", help="Hand-assemble the 1337 BOOT demo ROM and 1337ify it")
     parser.add_argument("--raw-boot-only", action="store_true", help="Output only the raw hand-assembled 1337boot.gba ROM")
     args = parser.parse_args()

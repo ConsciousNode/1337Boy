@@ -1,70 +1,51 @@
-# 1337Boy™ Feature Truth Table & Honest Engineering Status (`FEATURES.md`)
+# 1337Boy™ v1.1 Feature Truth Table & Honest Engineering Status (`FEATURES.md`)
 
 `Copyright (c) 2026 Khamerron Kizer / ConsciousNode SoftWorks` — Licensed under the **MIT License**.
 
-## 1. Feature Truth Table
+## 1. Feature Truth Table (v1.1)
 
 | Feature / Subsystem | Where Implemented | Status | Verification & Notes |
 | :--- | :--- | :--- | :--- |
-| **ARM7TDMI — ARM Instruction Set (All 16 ALU ops, Barrel Shifter, Flags)** | `1337boy.html` (`stepArm`, `execDataProc`, `shiftImm`, `shiftReg`) | **Working** | Executed & verified against **210 built-in ARM test vectors** in Node.js and headless Chromium. |
-| **ARM7TDMI — Multiply Variants (`MUL`, `MLA`, `UMULL`, `UMLAL`, `SMULL`, `SMLAL`)** | `1337boy.html` (`stepArm` using `Math.imul` & 64-bit `BigInt`) | **Working** | Executed & verified in built-in self-test (32-bit and 64-bit signed/unsigned + carry/flags). |
-| **ARM7TDMI — `LDM`/`STM` Edge Cases (Empty `rlist`, `Rn` in list, User-bank `S=1`)** | `1337boy.html` (`execBlockTransfer`) | **Working** | Executed & verified: empty `rlist` transfers `R15` and adds `+0x40`; `Rn` first stores old base; `Rn` not-first stores new base; `S=1` transfers User bank. |
-| **ARM7TDMI — `SWP`/`SWPB`, `MRS`/`MSR`, Misaligned Load Rotations** | `1337boy.html` (`stepArm`, `execMsr`, `read32`, `read16Rotated`, `readSigned16`) | **Working** | Executed & verified: `LDR`/`SWP` rotate right by `(addr & 3) * 8`; `LDRH` rotates by 8 on odd addresses; `LDRSH` sign-extends high byte on odd addresses. |
-| **ARM7TDMI — Thumb Instruction Set (All 19 Formats)** | `1337boy.html` (`stepThumb`) | **Working** | Executed & verified against **135 built-in Thumb test vectors** in Node.js and headless Chromium. |
-| **CPU Modes, Banked Registers, Pipeline `PC+8` (ARM) / `PC+4` (Thumb)** | `1337boy.html` (`switchMode`, `getReg`, `triggerIrqException`) | **Working** | Executed & verified: `USR`, `FIQ`, `IRQ`, `SVC`, `ABT`, `UND`, `SYS` banks isolated; `PC+12` on reg-shifted ALU. |
-| **Memory Map & Mirroring (BIOS, EWRAM, IWRAM, I/O, Pal, VRAM 96KB, OAM, ROM, SRAM)** | `1337boy.html` (`read8/16/32`, `write8/16/32`, `vramMirrorOffset`) | **Working** | Executed & verified: EWRAM 256KB, IWRAM 32KB (`0x03FFFFFC` -> `0x03007FFC`), VRAM 96KB (`0x06018000` -> `0x06010000`), OAM 8-bit ignore, Palette 8-bit duplicate, SRAM 8-bit bus repetition. |
-| **Custom 1337Boy BIOS (`0x18` IRQ Dispatcher + Open-Bus Protection)** | `1337boy.html` (`initBios`, `readBios32`, `readOpenBus32`) | **Working** | Hand-assembled ARM IRQ vector at `0x18 -> 0x128` saves `R0-R3, R12, LR`, calls `[0x03007FFC]`, restores & returns; BIOS read when `PC >= 0x4000` returns `biosLastFetch`. |
-| **BIOS SWI Services (`SoftReset`, `RegisterRamReset`, `Halt`, `IntrWait`, `VBlankIntrWait`)** | `1337boy.html` (`handleSwi` `0x00..0x05`) | **Working** | Implemented in HLE; `IntrWait` & `VBlankIntrWait` clear `[0x03007FF8]` flags and halt until interrupt. |
-| **BIOS Math SWIs (`Div`, `DivArm`, `Sqrt`, `ArcTan`, `ArcTan2`)** | `1337boy.html` (`handleSwi` `0x06..0x0A`) | **Working** | `Div` and `Sqrt` executed & verified against JS reference vectors; `ArcTan`/`ArcTan2` implemented with GBA polynomial. |
-| **BIOS Memory & Decompression SWIs (`CpuSet`, `CpuFastSet`, `Bg/ObjAffineSet`, `BitUnPack`, `LZ77`, `Huff`, `RL`, `Diff8/16`)** | `1337boy.html` (`handleSwi` `0x0B..0x18`) | **Working** | `LZ77UnCompWram` executed & verified in 64-byte round-trip self-test; `CpuSet`, `CpuFastSet`, `HuffUnComp`, `RLUnComp`, `DiffUnFilter` implemented. |
-| **PPU Modes 0, 1, 2 (Regular Text & Affine Tile BGs, 4bpp/8bpp, all sizes, wrap)** | `1337boy.html` (`renderTextBgScanline`, `renderAffineBgScanline`) | **Working** | Implemented with full `PA/PB/PC/PD` affine step and internal `bgRefX/Y` scanline progression. |
-| **PPU Modes 3, 4, 5 (Bitmaps, Page Flip, Affine Matrix & Reference Point Scaling)** | `1337boy.html` (`renderBitmapBgScanline`) | **Working** | Executed & verified both on `1337boot.1337.gba` (Mode 3) and in self-test for 2x stretch (`120x80 -> 240x160` via `BG2PA/PD = 0x80`). |
-| **PPU Sprites (Regular & Affine Double-Size, 1D/2D, 4bpp/8bpp, Bitmap Tile 512+ Rule)** | `1337boy.html` (`renderSpritesScanline`) | **Working** | Executed & verified: sprites using tiles `< 512` in Modes 3–5 are suppressed; tiles `>= 512` render properly. |
-| **PPU Priorities, Windows (`WIN0`, `WIN1`, `OBJWIN`), Alpha Blending, Fade, Mosaic** | `1337boy.html` (`renderScanline`, `blendColors`) | **Working** | Scanline compositor handles 4 priority levels, `WININ`/`WINOUT`, `BLDCNT`/`BLDALPHA`/`BLDY`, and semi-transparent OBJs. |
-| **Timers 0–3 (Prescalers 1/64/256/1024, Cascade Count-Up, IRQs)** | `1337boy.html` (`stepTimers`, `advanceTimer`) | **Working** | Implemented with sub-cycle accumulators, overflow cascading, Timer IRQs, and Direct Sound FIFO triggers. |
-| **DMA 0–3 (Immediate, VBlank, HBlank, Special Sound FIFO, Repeat, Addr Modes)** | `1337boy.html` (`writeDmaCnt`, `executeDma`, `triggerDmaTiming`) | **Working** | Supports 16/32-bit transfers, Inc/Dec/Fixed/Reload modes, VBlank/HBlank triggers, and Sound FIFO DMA1/DMA2. |
-| **Keypad (`KEYINPUT`, `KEYCNT` IRQ) & Touch Overlay (Multi-touch, No Scroll)** | `1337boy.html` (`setKeys`, `checkKeypadIrq`, `pointerdown/up`) | **Working** | Active-low `0x03FF` key mask, AND/OR `KEYCNT` IRQ, full keyboard + mobile multi-touch overlay. |
-| **Saves (32 KB SRAM, Save/Load `.sav` buttons, `localStorage` autosave)** | `1337boy.html` (`saveAutosave`, `loadAutosave`, `#btn-savesav`) | **Working** | Graceful `try/catch` around `localStorage` keyed by ROM CRC32, plus manual `.sav` import/export. |
-| **Sound (PSG Channels 1–4 + Direct Sound FIFO A/B)** | `1337boy.html` (`sampleAudioScanline`, `B1337AudioDriver`) | **Working (Simple)** | Mixes Direct Sound FIFO A/B and PSG channels into stereo ring buffer played via Web Audio on first user gesture. |
-| **Polyglot Builder (In-Browser `1337IFY!` + `tools/1337ify.py` CLI)** | `1337boy.html` & `tools/1337ify.py` | **Working** | Executed & verified in headless Chromium: outputs are **byte-identical** (`228,759` bytes, `CRC32 = 0xF089868A`) and idempotent on re-1337ification. |
-| **Tier 2: Hand-Assembled `1337 BOOT` Quine Cartridge (`1337boot.1337.gba`)** | `tools/1337ify.py` (`assemble_1337boot_rom`) | **Working** | Executed & verified in Node.js and headless Chromium: computes and renders `SELF CRC32: ADF3A552` matching its own `1,520`-byte ROM prefix. |
-| **Tier 2: Save States (`.1337state`), Fast-Forward (`Tab`), Pause/Header Modal, Disassembler (`` ` ``)** | `1337boy.html` (`serializeState`, `disassembleAt`) | **Working** | Full JSON+Base64 state snapshot/restore, 4x turbo on `Tab`, header checksum validator, and ARM/Thumb step debugger. |
-| **Tier 3: Link Cable (`BroadcastChannel`) & GPIO/RTC (`S-3511A`)** | `1337boy.html` (`initLinkCable`, `writeGpio`, `prepareRtcData`) | **Partial / Untested on commercial ROMs** | Implemented for same-machine multi-tab `SIOCNT` 16-bit transfers and `0x080000C4..C8` BCD date/time reads; not tested against commercial multiplayer/RTC games. |
+| **ARM7TDMI — ARM Instruction Set (All 16 ALU ops, Barrel Shifter, Flags)** | `1337boy.html` (`stepArm`, `execDataProc`, `shiftImm`, `shiftReg`) | **Working** | Executed & verified against **210 built-in ARM test vectors** in Node.js and headless Chromium, plus `jsmolka/gba-tests` `arm.gba` (verified by Kehai Interim). |
+| **ARM7TDMI — Thumb Instruction Set + Empty `rlist` `STMIA`/`PUSH` (`thumb` test 229)** | `1337boy.html` (`stepThumb`) | **Working** | Fixed Format 15 `STMIA Rb!, {}` (`0xC000`) and Format 14 `PUSH {}` (`0xB400`) to store `pc + 6` (`instr_addr + 6`) and adjust base by `0x40`. Verified in built-in self-test. |
+| **ARM7TDMI — 2-Stage Prefetch Pipeline (`nes` test 1)** | `1337boy.html` (`pipe0`, `pipe1`, `pipePc`, `fetchArmOpcode`, `fetchThumbOpcode`) | **Working** | Executes from prefetched queue when self-modifying code overwrites `pc + 4` (ARM) or `pc + 2` (Thumb); flushes on all writes to `R15`. Executed & verified in ARM and Thumb self-tests. |
+| **BIOS Open-Bus Latch States (`bios` test 1–3) & `GetBiosChecksum` (`SWI 0x0D`)** | `1337boy.html` (`initBios`, `readBios32`, `handleSwi`, `execDataProc`) | **Working** | Verified all 4 hardware states: `0xE129F000` (post-boot/SoftReset/IntrWait), `0xE25EF004` (during IRQ), `0xE55EC002` (after IRQ return via `0x0144` prefetch), `0xE3A02004` (after SWI), plus `SWI 0x0D` (`0xBAAE187F`). |
+| **Save Memory — SRAM 32 KB & `NONE` (`save/sram.gba`, `save/none.gba`)** | `1337boy.html` (`readSave8`, `writeSave8`) | **Working** | Initialized to `0xFF` (erased state) and mirrored across `0x0E000000–0x0FFFFFFF`. Executed & verified in self-test. |
+| **Save Memory — Flash 64 KB (`0x1CC2`) & 128 KB (`0x1362`) (`save/flash64.gba`, `save/flash128.gba`)** | `1337boy.html` (`readSave8`, `writeSave8`) | **Working** | Full `0xAA`/`0x55` command state machine: Chip ID (`0x90`, Macronix `0x1CC2` for 64KB, Sanyo `0x1362` for 128KB), Reset (`0xF0`), Sector Erase (`0x80`->`0x30`), Chip Erase (`0x80`->`0x10`), Byte Program (`0xA0`), and 128KB Bank Switch (`0xB0`). Verified in self-test. |
+| **Save Memory — EEPROM 512 B & 8 KB (DMA3 Serial Protocol at `0x0D000000`)** | `1337boy.html` (`handleEepromDmaWrite`, `handleEepromDmaRead`, `read16`) | **Working** | Infers 6-bit (`9`/`73` halfwords) vs. 14-bit (`17`/`81` halfwords) addressing from DMA3 count; returns ready bit `1` on `0x0D000000` reads. Executed & verified in 64-bit write/read round-trip self-test. |
+| **Save Type Auto-Detection + Heuristic Fallback + UI Override** | `1337boy.html` (`detectSaveType`, `setSaveType`, `#sel-savetype`) | **Working** | Scans ROM for `SRAM_V`, `SRAM_F_V`, `FLASH_V`, `FLASH512_V`, `FLASH1M_V`, `EEPROM_V`; upgrades heuristically when no string is present; manual UI selector & `B1337.setSaveType()`. |
+| **Deterministic Headless Stepping Hook (`window.B1337.setRealtime`)** | `1337boy.html` (`window.B1337.setRealtime`) | **Working** | Pauses/resumes `requestAnimationFrame` stepping so `B1337.runFrames(n)` runs an exact deterministic frame count. Executed & verified in headless Chromium. |
+| **Hardware Cycle Timing (`WAITCNT` `0x04000204`, Prefetch Buffer, DMA Stalls)** | `1337boy.html` (`updateWaitstates`, `finishCycles`, `executeDma`) | **Working** | Models ROM WS0/1/2 N & S waitstates (16/32-bit), SRAM waitstates, EWRAM (3/6 cycles), VRAM/Pal/OAM bus widths, Game Pak prefetch buffer (bit 14), Booth multiplier internal cycles, and DMA bus stalls. Verified in self-test. |
+| **Sound — PSG Channel 3 Wave RAM, Envelopes/Sweep, `SOUNDBIAS`, `AudioWorklet`** | `1337boy.html` (`stepPsgFrameSequencer`, `sampleAudioScanline`, `B1337AudioDriver`) | **Working** | Dual-bank 32/64-sample Wave RAM (`0x90..0x9F`), 512 Hz frame sequencer (length, Ch1 sweep, volume envelopes), `SOUNDCNT_X` active bits, `SOUNDBIAS` resolution, and inline `Blob` `AudioWorklet` with `ScriptProcessorNode` fallback. |
+| **Tier 3 Toolkit (Gamepad API, Remap UI, 4 Save Slots + Thumbnails, Rewind, Speed `0.25x..8x`, Frame Step, PNG Snap, Integer Scale, LCD Grid, GBA Color Correction, Fullscreen, IndexedDB Library, Cheats)** | `1337boy.html` (`initB1337App`, `BGR555_CC_LUT`, `B1337LibraryDB`) | **Working** | All 9 toolkit features implemented in-page with zero external dependencies; phone layout rules from 1.0.1 preserved and verified at `360px`, `412px`, and `600px` viewports. |
 
-## 2. Honest Status Report
+## 2. Honest Status Report (v1.1)
 
-### Completed Tiers
-- **Tier 1 (The Console, Builder, Reset Sequence, and Self-Test)**: **Complete and executed.**
-- **Tier 2 (Hand-Assembled `1337 BOOT` Quine Cartridge, Save States, Fast-Forward, Header Inspector, Step Debugger)**: **Complete and executed.**
-- **Tier 3 (BroadcastChannel Link Cable & S-3511A RTC)**: **Implemented, lightly tested in isolation.**
+### Executed vs. Unexecuted Tests
+- **Executed in Headless Chromium 156 & Node.js V8**:
+  - **391 / 391 built-in self-test vectors** (`window.B1337.selftest()`), including dedicated unit tests reproducing the exact instruction/bus sequences of `thumb.gba` test 229 (`STMIA R0!, {}` storing `PC + 6`), `nes.gba` test 1 (ARM and Thumb self-modifying code at `PC + 4` / `PC + 2`), `bios.gba` tests 1–3 (`0xE129F000`, `0xE3A02004`, `0xE25EF004` during IRQ, `0xE55EC002` after IRQ return), `save/{sram,none,flash64,flash128}` + `EEPROM` DMA3, `WAITCNT` timing tables, and Wave RAM bank isolation.
+  - **CLI vs. Browser Byte-Identity & Idempotence**: Verified in headless Chromium that `tools/1337ify.py --build-boot` and `window.B1337.buildPolyglot()` produce byte-for-byte identical `302,635`-byte files (`CRC32 = 0xD58473CB`), and re-1337ifying is idempotent.
+  - **Phone Viewport Layout Verification**: Tested in headless Chromium at `360x740`, `412x740`, and `600x740` viewports (`scrollWidth == clientWidth`, zero horizontal overflow, 3:2 canvas ratio preserved).
+- **Not Executed in This Offline Sandbox**:
+  - External `jsmolka/gba-tests` ROM binaries (`thumb.gba`, `nes.gba`, `bios.gba`, `save/*.gba`), the studio's two external homebrew ROMs (*Wrongfully Accused*, *GBA-Craft*), and native `mGBA` (not present in the sandbox VM).
+  - Note on `bios.gba`: Tests 1–3 (open-bus states) and all HLE math/decompression SWI tests are modeled, whereas any `bios.gba` sub-test that branches directly into undocumented mid-function addresses inside Nintendo's proprietary 16 KB BIOS binary requires a real GBA BIOS dump.
 
-### Executed vs. Implemented-Without-Executing Tests
-- **Actually Executed (in Headless Chromium 156.0.8078.73 and Node.js)**:
-  - All **380 built-in self-test vectors** via both `await window.B1337.selftest()` and clicking the in-page `#btn-selftest` button (`380 passed, 0 failed`).
-  - **42 adversarial HTML5 tokenizer and trailing-byte prefix tests** in headless Chromium 156 confirming the 158-byte reset sequence recovers `Data state` and executes JS across unclosed tags, attributes (`"`, `'`, unquoted), comments (`<!--`, `--!`), rawtext (`<style>`, `<xmp>`, `<iframe>`, `<noscript>`, `<noembed>`, `<noframes>`), RCDATA (`<title>`, `<textarea>`), `<script>`, and foreign content (`<![CDATA[`, `<svg>`, `<math>`).
-  - **CSP `<meta>` enforcement verification** in headless Chromium 156 across standalone and polyglot loads (confirming why static `<meta>` is pushed to `<body>` by binary prefixes and verifying that `enforceZeroNetworkCSP()` restores strict `connect-src 'none'` blocking in `document.head`).
-  - **Byte-identical polyglot verification**: Compared `tools/1337ify.py --build-boot` output (`228,759` bytes) against `window.B1337.buildPolyglot()` in headless Chromium (`cmp` / byte-for-byte equality confirmed, `CRC32 = 0xF089868A`), plus re-1337ification idempotence check.
-  - **Full boot & visual framebuffer inspection of `1337boot.1337.gba`** in headless Chromium 156 (`SELF CRC32: ADF3A552` rendered on screen and stored at `IWRAM[0x03000000]`).
-- **Not Executed in This Sandbox**:
-  - External `jsmolka/gba-tests` ROMs, the studio's two external homebrew cartridges, and native `mGBA` desktop binary execution (as neither `mGBA` nor the external test ROMs are pre-installed in the offline VM sandbox).
+### Measured FPS Before (1.0.1) vs. After (1.1)
+1. **Full-Frame Emulation (`1337boot.gba`, 300 frames in Headless Chromium 156)**:
+   - **1.0.1 Baseline**: `651.30 ms` -> **`460.6 FPS`** (`2.171 ms/frame`)
+   - **1.1 (with 2-stage pipeline, `WAITCNT` waitstates, and BGR555 LUT)**: `411.90 ms` -> **`728.3 FPS`** (`1.373 ms/frame`, **12.1x real-time 60 fps headroom**)
+2. **Full-Frame Emulation (`1337boot.gba`, 600 frames in Node.js V8)**:
+   - **1.0.1 Baseline**: `2248.38 ms` -> **`266.9 FPS`** (`3.747 ms/frame`)
+   - **1.1**: `1178.92 ms` -> **`508.9 FPS`** (`1.965 ms/frame`)
+   *(Why ROM frame rate increased: in 1.0.1 every ROM instruction took 1 cycle so the CPU executed ~5x too many ROM instructions per scanline; modeling real `WAITCNT` ROM waitstates + a precomputed 32K BGR555-to-RGBA lookup table cut per-frame work nearly in half.)*
+3. **Pure 1-Cycle IWRAM Tight Loop (300 frames, 280,896 single-cycle instructions/frame in Node.js V8 — isolating raw CPU dispatch overhead)**:
+   - **1.0.1 Baseline**: `865.84 ms` -> **`346.5 FPS`** (`2.886 ms/frame`)
+   - **1.1 (with 2-stage pipeline + waitstate/prefetch accounting)**: `1413.21 ms` -> **`212.3 FPS`** (`4.711 ms/frame`, **3.5x real-time 60 fps headroom** even in the worst-case 100% 1-cycle IWRAM loop).
 
-### Predicted FPS & Weakest GBA Features
-- **Predicted FPS**: Steady **60.0 fps** in Chromium on any modern laptop (measured ~1.8 ms per frame for Mode 3/Mode 0 rendering in V8, well within the 16.67 ms 60 Hz budget; 4x fast-forward runs at ~240 emulated fps).
-- **Weakest GBA Features**:
-  1. **Instruction Cycle Timing & Waitstates**: All instructions run with approximate cycle counts (`1–4` cycles) without modeling prefetch buffer stalls, non-sequential (`N`) vs. sequential (`S`) ROM waitstates (`WAITCNT`), or DMA bus lock duration.
-  2. **PSG Audio Channel 3 (Wave RAM) & Envelope Sweep**: PSG Channels 1, 2, and 4 and Direct Sound FIFOs A & B are synthesized, whereas PSG Channel 3 (custom 4-bit Wave RAM bank switching) and hardware frequency sweep/envelope decay are simplified.
-  3. **EEPROM / Flash 64K / 128K Save Types**: Save memory is mapped as standard 32 KB flat SRAM at `0x0E000000..0x0E007FFF` (8-bit bus). Games requiring serial EEPROM (`0x0DXXXXXX` bit-stream protocol) or command-latched Flash (`0xAA/0x55` command sequences) will only work if they fall back to or use SRAM.
-
-### Three Most Likely Failure Points on Real Homebrew & How to Diagnose Each
-
-1. **Homebrew Using `VBlankIntrWait` (SWI `0x05`) Without Writing `[0x03007FF8]` in Custom IRQ Handlers**
-   - **Why It Happens**: On real GBA hardware, `VBlankIntrWait` checks the BIOS interrupt acknowledgment mirror at `[0x03007FF8]` (or `0x03FFFFF8`), which standard `libtonc` / `devkitARM` ISR dispatchers (`INTR_VECTOR`) populate by ORing acknowledged `IF` bits into `REG_IFBIOS`. While our `runFrame()` automatically sets bit 0 of `[0x03007FF8]` at VBlank (`line === 160`) to protect homebrew that forgets to update `REG_IFBIOS`, a custom ISR that overwrites `0x03007FF8` with `0` before returning could cause `IntrWait` (`SWI 0x04`) for non-VBlank interrupts (e.g., Timer or HBlank) to stay halted.
-   - **How to Diagnose**: Press Backquote (`` ` ``) to open the **ARM7TDMI Step Debugger**. If `FLAGS` shows `HALTED` and `PC` stays fixed right after a `SWI 0x04` instruction while `IE` (`0x04000200`) has non-VBlank interrupts enabled, inspect `[0x03007FF8]` and `[0x03007FFC]` (user ISR pointer).
-
-2. **Mid-Scanline HBlank Raster Effects Timing Skew**
-   - **Why It Happens**: Our scheduler executes `960` cycles of HDraw, calls `renderScanline(y)`, and then sets `DISPSTAT.HBlank` and triggers HBlank DMAs/IRQs for `272` cycles. If a homebrew title uses an HBlank **IRQ** (rather than HBlank **DMA**) to modify scroll registers (`BGxHOFS` or palette entries) for line `y + 1` and takes more than `272` approximate cycles inside its ISR before returning, the register write might land after `renderScanline(y + 1)` if cycle counts are underestimated.
-   - **How to Diagnose**: If horizontal raster splits jitter by 1 scanline, check in the debugger whether `IE` has bit 1 (`IRQ_HBLANK`) set vs. `DMAxCNT_H` having bits `12..13 == 2` (HBlank DMA). HBlank DMA is executed deterministically between scanlines and will not jitter.
-
-3. **Sub-Instruction Pre-Indexed / Post-Indexed `R15` Writeback Quirks in Hand-Written Assembly**
-   - **Why It Happens**: Compiled C/C++ (`devkitARM` GCC) never uses `R15` (`PC`) as the base register `Rn` with writeback (`W=1`), nor does it use `LDM`/`STM` with `R15` and writeback. However, synthetic CPU test suites (`jsmolka/gba-tests` ARM/Thumb edge tests) test undocumented ARM7TDMI combinations such as `STR PC, [R0]` (`PC+12` vs `PC+8`) or `LDRSH` on unaligned addresses. We specifically implemented `PC+12` on `STR`/`STM` and register-shifted ALU, and single-byte sign-extension on unaligned `LDRSH`, but if a `gba-tests` sub-test fails, it will display the failing test number on screen.
-   - **How to Diagnose**: Read the numeric failure code rendered by `gba-tests` on the canvas, press Backquote (`` ` ``) to inspect `R0..R15` and `CPSR`, and match the test number against the corresponding block in `arm.asm` / `thumb.asm` / `memory.asm`.
+### Three Most Likely Regressions to Check First
+1. **Waitstate Cycle Counting on *GBA-Craft* (3D Voxel Frame Pacing)**:
+   - *Why*: In 1.0.1, ROM and EWRAM accesses cost 1 cycle, whereas in 1.1 ROM accesses cost `WAITCNT` N/S cycles (`4–8` cycles) and 32-bit EWRAM accesses cost `6` cycles. If *GBA-Craft* runs its software 3D renderer from ROM/EWRAM without setting `WAITCNT = 0x4317`, its frame rate could change relative to 1.0.1 (though it should now be closer to hardware/mGBA).
+2. **Pipeline Flush Coverage on Unusual `R15` Writes**:
+   - *Why*: The 2-stage prefetch pipeline (`pipe0`, `pipe1`, `pipePc`) relies on flushing `this.pipePc = -1` whenever an instruction writes to `R15` (including a branch to `pc + 4`, the very next instruction). We flush on all `B`/`BL`/`BX`, `LDR/LDH/LDRSB/LDRSH PC`, `LDM {PC}`, `POP {PC}`, `ALU/Hi-Reg Rd=15`, `MSR` T-bit changes, `SWI`, and `IRQ`, but any missed edge case would execute one stale prefetched opcode.
+3. **Heuristic Save Type Auto-Detection (`AUTO`) on Homebrew Without SDK Strings**:
+   - *Why*: When a ROM lacks a standard ID string (`SRAM_V`, `FLASH_V`, `EEPROM_V`), 1.1 starts in `AUTO` mode (reading `0xFF` across `0x0E000000–0x0FFFFFFF`), upgrading to `FLASH128` only if the exact 3-step unlock sequence (`0xAA @ 0x5555 -> 0x55 @ 0x2AAA -> CMD @ 0x5555`) is written, to `EEPROM` on DMA3 to `0x0D000000`, and to `SRAM` on any other write to `0x0E000000`. If a Flash homebrew game writes a stray byte to `0x0E000000` before its first Flash unlock command, it would lock into `SRAM` unless overridden via the UI dropdown or `B1337.setSaveType('FLASH128')`.
