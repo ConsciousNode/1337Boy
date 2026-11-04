@@ -1,10 +1,11 @@
 // 1337Boy CPU timing check against mGBA (Kehai Interim, 2026-11-04).
 //   node tests/timing.mjs [page.html]
 //
-// tests/timing/probe1..6.gba are small homebrew ROMs (sources alongside: probeN.c + loops*.s,
+// tests/timing/probe1..7.gba are small homebrew ROMs (sources alongside: probeN.c + loops*.s,
 // built with devkitARM + libtonc). Each times short instruction loops with cascaded timers
 // TM2/TM3 and prints cycles x100 per loop iteration, once with WAITCNT 0000 (the power-on
 // setting, no prefetch) and once with 4317 (the setting most commercial games use, prefetch on).
+// (probe7 isolates the LDM question: LDR vs one-register LDM of the same ROM word.)
 // tests/timing/mgba/probeN.png is what mGBA 0.10.2 prints. This script runs each probe in
 // 1337Boy and compares the printed rows pixel for pixel.
 //
@@ -59,7 +60,7 @@ function labels(n) {
 
 const br = await chromium.launch();
 let bad = 0;
-for (let n = 1; n <= 6; n++) {
+for (let n = 1; n <= 7; n++) {
   const p = await br.newPage();
   await p.addInitScript(() => { window.requestAnimationFrame = () => 0; });
   await p.goto('file://' + page); await p.waitForTimeout(1200);
