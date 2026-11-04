@@ -30,6 +30,19 @@ Argon's 1.1, as delivered: the polyglot (302,635 bytes, CRC32 `D58473CB`) matche
 
 ![gba-tests](docs/testing/gba-tests-1337boy-1.1.1.png)
 
+## Real-world check: Kham's phone (1.1.1, 2026-11-04)
+
+Kham opened the console from the GitHub Pages site in Chrome on his Android phone and played *The Legend of Zelda: The Minish Cap* (his own dump, not in this repo) as a proof of concept:
+
+| Feature | Result |
+|---|---|
+| Frame rate | ✓ FPS badge 58.5 to 59.9 through the intro and the first scenes. Before 1.0.2 the same phone showed 89.7 |
+| In-game save (an EEPROM save chip, new in 1.1) | ✓ saves, and the save is still there after a reload |
+| Save states | ✓ |
+| 1337IFY! export as `.gba` and `.html` | ✓ both written |
+| Exported `.html` renamed to `.gba` | ✓ loads as a ROM, and the in-game save comes with it |
+| Exported `.gba` renamed to `.html` | ✗ shown as raw text. This is Android, not the file: the system passes Chrome the type it recorded when the file was saved, and a polyglot can't be recognised as HTML from its content because it must start with the ROM. Copy to a new `.html` name instead (see README) |
+
 ## Fixed in 1.1.1: CPU timing (why GBA-Craft rolled a different world)
 
 **Symptom.** In 1.1 the menus of *GBA-Craft* matched mGBA pixel for pixel, but the generated world was different, and the in-game FPS read 12 to 20 where mGBA read 9 to 15. GBA-Craft takes its default world seed from a frame counter at the moment you pick *New World*, so a different seed meant the console's timing had drifted somewhere before that point.
